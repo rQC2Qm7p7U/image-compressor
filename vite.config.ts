@@ -31,4 +31,16 @@ export default defineConfig({
       }
     })
   ],
+  optimizeDeps: {
+    exclude: ['@jsquash/jpeg', '@jsquash/webp']
+  },
+  server: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp'
+    }
+  },
+  worker: {
+    format: 'es'
+  }
 })
