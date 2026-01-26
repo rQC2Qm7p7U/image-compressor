@@ -11,6 +11,7 @@ self.onmessage = async (e: MessageEvent) => {
         const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
         const { width, height } = calculateSize(bitmap.width, bitmap.height, settings.resize, settings.maxWidth);
 
+
         // 2. Resize & Get ImageData
         const canvas = new OffscreenCanvas(width, height);
         const ctx = canvas.getContext('2d');
