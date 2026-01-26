@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useAppStore, type Job } from '../store/useAppStore';
-import { Download, FolderInput, RefreshCw, ArrowRight, ArrowDownAZ, ArrowUpNarrowWide, TestTube, Eye } from 'lucide-react';
+import { Download, FolderInput, RefreshCw, ArrowDownAZ, ArrowUpNarrowWide, TestTube, Eye } from 'lucide-react';
 import { createZipFromJobs, downloadBlob, saveToFolder } from '../lib/exportUtils';
 import { CompareModal } from '../components/CompareModal';
 
@@ -148,7 +148,7 @@ export const QueueView: React.FC = () => {
                     <button
                         className={`btn icon-btn ${sortMode === 'name' ? 'active' : ''}`}
                         onClick={() => setSortMode('name')}
-                        title="Sort by Name"
+                        title="Sort by Name (A-Z)"
                         style={{ opacity: sortMode === 'name' ? 1 : 0.5 }}
                     >
                         <ArrowDownAZ size={18} />
@@ -156,7 +156,7 @@ export const QueueView: React.FC = () => {
                     <button
                         className={`btn icon-btn ${sortMode === 'size-desc' ? 'active' : ''}`}
                         onClick={() => setSortMode('size-desc')}
-                        title="Sort by Size (Largest)"
+                        title="Sort by Size (Largest First)"
                         style={{ opacity: sortMode === 'size-desc' ? 1 : 0.5 }}
                     >
                         <ArrowUpNarrowWide size={18} />
@@ -186,6 +186,7 @@ export const QueueView: React.FC = () => {
                 <button
                     className="btn"
                     onClick={handleTestFirst}
+                    title="Process only the first image to verify settings"
                     style={{ alignSelf: 'flex-start', border: '1px solid hsl(var(--color-primary))', color: 'hsl(var(--color-primary))' }}
                 >
                     <TestTube size={18} /> Test First Image
@@ -214,37 +215,30 @@ export const QueueView: React.FC = () => {
                                         job.status === 'error' ? 'hsl(var(--color-error))' : 'hsl(var(--color-border))'
                             }} />
 
-                            <div style={{ flex: 1, overflow: 'hidden' }}>
-                                <div style={{ fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {job.file.name}
-                                </div>
-                                <div style={{ fontSize: '0.8rem', color: 'hsl(var(--color-text-dim))', display: 'flex', gap: '1rem', marginTop: '4px' }}>
-                                    <span>{(job.originalSize / 1024).toFixed(1)} KB</span>
-                                    {job.status === 'done' && (
-                                        <>
-                                            <ArrowRight size={12} />
-                                            <span style={{ color: 'hsl(var(--color-success))' }}>{(job.compressedSize! / 1024).toFixed(1)} KB</span>
-                                        </>
-                                    )}
+                            <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: 500 }}>{job.file.name}</div>
+                                <div style={{ fontSize: '0.85rem', color: 'hsl(var(--color-text-dim))' }}>
+                                    {(job.originalSize / 1024).toFixed(1)} KB
                                 </div>
                             </div>
 
-                            {job.status === 'done' && (
-                                <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
-                                    <button
-                                        className="btn icon-btn"
-                                        onClick={() => setCompareJob(job.id)}
-                                        title="Compare with Original"
-                                        style={{ padding: '0.4rem', height: 'auto' }}
-                                    >
-                                        <Eye size={18} />
-                                    </button>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <div style={{ color: 'hsl(var(--color-success))', fontWeight: 700 }}>{Number(itemSavings) > 0 ? '-' : '+'}{Math.abs(Number(itemSavings))}%</div>
-                                    </div>
-                                </div>
-                            )}
-
+                            {/* Result Stats */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+                                {job.status === 'done' && (
+                                    <>
+                                        <span>{(job.compressedSize! / 1024).toFixed(1)} KB</span>
+                                        <span style={{ color: 'hsl(var(--color-success))' }}>({itemSavings}%)</span>
+                                        <button
+                                            className="btn icon-btn"
+                                            onClick={() => setCompareJob(job.id)}
+                                            title="Compare with Original"
+                                            style={{ padding: '0.4rem', height: 'auto' }}
+                                        >
+                                            <Eye size={18} />
+                                        </button>
+                                    </>
+                                )}
+                            </div>
                             {job.status === 'processing' && <RefreshCw className="spin" size={20} />}
                         </div>
                     );
@@ -255,11 +249,11 @@ export const QueueView: React.FC = () => {
             <div style={{ display: 'flex', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid hsl(var(--color-border))' }}>
                 <button
                     className="btn btn-primary"
-                    style={{ flex: 1 }}
                     disabled={files.filter(f => f.status === 'done').length === 0}
                     onClick={handleDownloadZip}
+                    title="Download all compressed images as ZIP"
                 >
-                    <Download size={18} /> Download All (ZIP)
+                    <Download size={18} /> Download All
                 </button>
                 <button
                     className="btn"

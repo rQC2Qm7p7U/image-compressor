@@ -38,6 +38,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
                             key={p.id}
                             className="btn"
                             onClick={() => updateSettings(p.settings as any)}
+                            title={`Apply ${p.name} settings: ${p.desc}`}
                             style={{
                                 flexDirection: 'column',
                                 gap: '0.2rem',
@@ -59,18 +60,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
             <section className="card" style={{ padding: '1.5rem' }}>
                 <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Output Format</h3>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <label style={{
-                        flex: 1,
-                        cursor: 'pointer',
-                        padding: '1rem',
-                        background: settings.format === 'jpeg' ? 'hsl(var(--color-primary))' : 'hsl(var(--color-bg))',
-                        color: settings.format === 'jpeg' ? 'hsl(var(--color-bg))' : 'hsl(var(--color-text))',
-                        borderRadius: 'var(--radius-sm)',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        transition: 'all 0.2s',
-                        border: '1px solid ' + (settings.format === 'jpeg' ? 'hsl(var(--color-primary))' : 'hsl(var(--color-border))')
-                    }}>
+                    <label
+                        title="Convert images to JPEG format"
+                        style={{
+                            flex: 1,
+                            cursor: 'pointer',
+                            padding: '1rem',
+                            background: settings.format === 'jpeg' ? 'hsl(var(--color-primary))' : 'hsl(var(--color-bg))',
+                            color: settings.format === 'jpeg' ? 'hsl(var(--color-bg))' : 'hsl(var(--color-text))',
+                            borderRadius: 'var(--radius-sm)',
+                            textAlign: 'center',
+                            fontWeight: 600,
+                            transition: 'all 0.2s',
+                            border: '1px solid ' + (settings.format === 'jpeg' ? 'hsl(var(--color-primary))' : 'hsl(var(--color-border))')
+                        }}>
                         <input
                             type="radio"
                             name="format"
@@ -81,18 +84,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
                         />
                         JPEG
                     </label>
-                    <label style={{
-                        flex: 1,
-                        cursor: 'pointer',
-                        padding: '1rem',
-                        background: settings.format === 'webp' ? 'hsl(var(--color-primary))' : 'hsl(var(--color-bg))',
-                        color: settings.format === 'webp' ? 'hsl(var(--color-bg))' : 'hsl(var(--color-text))',
-                        borderRadius: 'var(--radius-sm)',
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        transition: 'all 0.2s',
-                        border: '1px solid ' + (settings.format === 'webp' ? 'hsl(var(--color-primary))' : 'hsl(var(--color-border))')
-                    }}>
+                    <label
+                        title="Convert images to WebP format (Recommended)"
+                        style={{
+                            flex: 1,
+                            cursor: 'pointer',
+                            padding: '1rem',
+                            background: settings.format === 'webp' ? 'hsl(var(--color-primary))' : 'hsl(var(--color-bg))',
+                            color: settings.format === 'webp' ? 'hsl(var(--color-bg))' : 'hsl(var(--color-text))',
+                            borderRadius: 'var(--radius-sm)',
+                            textAlign: 'center',
+                            fontWeight: 600,
+                            transition: 'all 0.2s',
+                            border: '1px solid ' + (settings.format === 'webp' ? 'hsl(var(--color-primary))' : 'hsl(var(--color-border))')
+                        }}>
                         <input
                             type="radio"
                             name="format"
@@ -117,6 +122,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
                     min="1"
                     max="100"
                     value={settings.quality}
+                    title="Adjust compression level (1-100)"
                     onChange={(e) => updateSettings({ quality: Number(e.target.value) })}
                 />
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'hsl(var(--color-text-dim))', marginTop: '0.5rem' }}>
@@ -129,7 +135,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
             <section className="card" style={{ padding: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: settings.resize ? '1rem' : 0 }}>
                     <h3 style={{ fontSize: '1.1rem' }}>Resize Image</h3>
-                    <label className="switch">
+                    <label className="switch" title="Enable resizing">
                         <input
                             type="checkbox"
                             checked={settings.resize}
@@ -145,6 +151,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
                         <input
                             type="number"
                             value={settings.maxWidth}
+                            title="Maximum width in pixels"
                             onChange={(e) => updateSettings({ maxWidth: Number(e.target.value) })}
                             style={{
                                 width: '100%',
@@ -163,6 +170,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
                 className="btn btn-primary"
                 onClick={handleStart}
                 disabled={files.length === 0}
+                title="Start processing the queue"
                 style={{ padding: '1rem', fontSize: '1.1rem' }}
             >
                 <Play size={20} fill="currentColor" />

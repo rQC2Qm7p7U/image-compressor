@@ -49,7 +49,7 @@ export const CompareModal: React.FC<CompareModalProps> = ({ isOpen, onClose, ori
     return (
         <div className="compare-modal-overlay" onClick={onClose}>
             <div className="compare-modal-content" onClick={e => e.stopPropagation()}>
-                <button className="close-btn" onClick={onClose}><X /></button>
+                <button className="close-btn" onClick={onClose} title="Close comparison"><X /></button>
 
                 <div className="compare-header">
                     <h3>Visual Inspection</h3>

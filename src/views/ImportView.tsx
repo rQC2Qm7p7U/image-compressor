@@ -44,6 +44,7 @@ export const ImportView: React.FC<ImportViewProps> = ({ onNext }) => {
                 onDragOver={onDragOver}
                 onDragLeave={onDragLeave}
                 onDrop={onDrop}
+                title="Click to select files or drag them here"
                 style={{
                     border: '2px dashed ' + (isDragging ? 'hsl(var(--color-primary))' : 'hsl(var(--color-border))'),
                     borderRadius: 'var(--radius-md)',
@@ -109,6 +110,7 @@ export const ImportView: React.FC<ImportViewProps> = ({ onNext }) => {
                                 <FileImage size={32} color="hsl(var(--color-text-dim))" />
                                 <button
                                     onClick={(e) => { e.stopPropagation(); removeFile(job.id); }}
+                                    title="Remove this file"
                                     style={{
                                         position: 'absolute',
                                         top: '4px',
@@ -148,7 +150,7 @@ export const ImportView: React.FC<ImportViewProps> = ({ onNext }) => {
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                        <button className="btn btn-primary" onClick={onNext}>
+                        <button className="btn btn-primary" onClick={onNext} title="Proceed to compression settings">
                             Continue to Settings <ArrowRight size={18} />
                         </button>
                     </div>
