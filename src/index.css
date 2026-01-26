@@ -1,0 +1,105 @@
+:root {
+  --font-sans: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  
+  /* HSL Color Palette - Premium Dark Theme */
+  --color-bg: 220 13% 10%;       /* #16181d */
+  --color-bg-card: 220 13% 14%;  /* #1f2229 */
+  --color-bg-hover: 220 13% 18%; /* #282c35 */
+  
+  --color-primary: 250 100% 70%; /* #9d8cff */
+  --color-primary-hover: 250 100% 75%;
+  
+  --color-text: 220 20% 90%;     /* #e1e3e8 */
+  --color-text-dim: 220 10% 60%; /* #94969c */
+  
+  --color-border: 220 10% 25%;   /* #3a3d42 */
+  
+  --color-success: 150 60% 50%;
+  --color-warning: 35 90% 60%;
+  --color-error: 0 80% 60%;
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: hsl(var(--color-bg));
+  color: hsl(var(--color-text));
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Utilities */
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+  width: 100%;
+}
+
+.card {
+  background-color: hsl(var(--color-bg-card));
+  border: 1px solid hsl(var(--color-border));
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: hsl(var(--color-bg-hover));
+  color: hsl(var(--color-text));
+}
+
+.btn:hover {
+  background-color: hsl(var(--color-border));
+}
+
+.btn-primary {
+  background-color: hsl(var(--color-primary));
+  color: hsl(var(--color-bg));
+}
+
+.btn-primary:hover {
+  background-color: hsl(var(--color-primary-hover));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(157, 140, 255, 0.3);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: hsl(var(--color-primary));
+}
