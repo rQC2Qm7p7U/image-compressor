@@ -9,6 +9,14 @@ interface SettingsViewProps {
 export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
     const { settings, updateSettings, files, setGlobalStatus } = useAppStore();
 
+    const presets = [
+        { id: 'web-modern', name: 'Web Modern', desc: 'Rec. for Banners', settings: { format: 'webp', quality: 80, resize: true, maxWidth: 1920 } },
+        { id: 'content', name: 'Content', desc: 'Blog Posts', settings: { format: 'webp', quality: 75, resize: true, maxWidth: 1200 } },
+        { id: 'thumb', name: 'Thumbnail', desc: 'Previews', settings: { format: 'webp', quality: 70, resize: true, maxWidth: 600 } },
+        { id: 'legacy', name: 'Legacy', desc: 'Email / Old', settings: { format: 'jpeg', quality: 75, resize: true, maxWidth: 1600 } },
+        { id: 'max', name: 'Original', desc: 'No Resize', settings: { format: 'webp', quality: 90, resize: false, maxWidth: 1920 } },
+    ] as const;
+
     const handleStart = () => {
         setGlobalStatus('processing');
         onNext();
@@ -20,6 +28,32 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
                 <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Conversion Settings</h2>
                 <p style={{ color: 'hsl(var(--color-text-dim))' }}>Configure how your images will be compressed.</p>
             </div>
+
+            {/* Presets */}
+            <section className="card" style={{ padding: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Webmaster Presets</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '0.8rem' }}>
+                    {presets.map(p => (
+                        <button
+                            key={p.id}
+                            className="btn"
+                            onClick={() => updateSettings(p.settings as any)}
+                            style={{
+                                flexDirection: 'column',
+                                gap: '0.2rem',
+                                padding: '0.8rem',
+                                background: 'hsl(var(--color-bg))',
+                                border: '1px solid hsl(var(--color-border))',
+                                height: 'auto',
+                                opacity: 1,
+                            }}
+                        >
+                            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{p.name}</span>
+                            <span style={{ fontSize: '0.75rem', color: 'hsl(var(--color-text-dim))' }}>{p.desc}</span>
+                        </button>
+                    ))}
+                </div>
+            </section>
 
             {/* Format Selection */}
             <section className="card" style={{ padding: '1.5rem' }}>

@@ -1,61 +1,68 @@
 import React, { useEffect } from 'react';
-import { useAppStore } from '../store/useAppStore';
-import { Download, FolderInput, RefreshCw, Trash2, ArrowRight } from 'lucide-react';
-import { compressImage } from '../lib/imageProcessor';
+import { useAppStore, type Job } from '../store/useAppStore';
+import { Download, FolderInput, RefreshCw, ArrowRight, ArrowDownAZ, ArrowUpNarrowWide, TestTube, Eye } from 'lucide-react';
 import { createZipFromJobs, downloadBlob, saveToFolder } from '../lib/exportUtils';
 import { CompareModal } from '../components/CompareModal';
-import { Eye } from 'lucide-react';
+
+type SortMode = 'original' | 'name' | 'size-desc';
+
+const sortFiles = (files: Job[], mode: SortMode): Job[] => {
+    switch (mode) {
+        case 'name':
+            return [...files].sort((a, b) => a.file.name.localeCompare(b.file.name));
+        case 'size-desc':
+            return [...files].sort((a, b) => b.originalSize - a.originalSize);
+        default:
+            return files;
+    }
+};
 
 export const QueueView: React.FC = () => {
-    const { files, globalStatus, updateJob, setGlobalStatus, resetQueue, settings } = useAppStore();
+    const { files, globalStatus, updateJob, setGlobalStatus, settings } = useAppStore();
     const [compareJob, setCompareJob] = React.useState<string | null>(null);
+    const [sortMode, setSortMode] = React.useState<SortMode>('original');
 
     // WORKER MANAGEMENT
     useEffect(() => {
-        if (globalStatus !== 'processing') return;
+        if (globalStatus === 'processing') {
+            const pendingJob = files.find(f => f.status === 'waiting' || (f.status === 'error' && !f.error));
+            if (pendingJob) {
+                updateJob(pendingJob.id, { status: 'processing', error: undefined });
 
-        const processQueue = async () => {
-            // Find all waiting jobs
-            const jobsToProcess = files.filter(f => f.status === 'waiting' || f.status === 'error');
+                // Spawn worker
+                const worker = new Worker(new URL('../workers/processor.worker.ts', import.meta.url), {
+                    type: 'module'
+                });
 
-            // If no jobs to process but we are in processing state, maybe we are done?
-            if (jobsToProcess.length === 0) {
-                // Check if any is processing?
-                const isProcessing = files.some(f => f.status === 'processing');
-                if (!isProcessing) {
+                worker.onmessage = (e) => {
+                    const { id, status, blob, error } = e.data;
+                    if (status === 'done' && blob) {
+                        updateJob(id, {
+                            status: 'done',
+                            outputBlob: blob,
+                            compressedSize: blob.size
+                        });
+                    } else if (status === 'error') {
+                        updateJob(id, { status: 'error', error });
+                    }
+                    worker.terminate();
+                };
+
+                worker.postMessage({
+                    id: pendingJob.id,
+                    file: pendingJob.file,
+                    settings
+                });
+            } else {
+                // All done?
+                if (files.every(f => f.status === 'done' || f.status === 'error')) {
                     setGlobalStatus('done');
                 }
-                return;
             }
+        }
+    }, [files, globalStatus, settings]); // Re-run when files change (one finishes)
 
-            // Process tasks in parallel using the engine (which handles concurrency)
-            // We map all waiting jobs to promises
-            await Promise.all(jobsToProcess.map(async (job) => {
-                // Double check status incase of race
-                if (job.status !== 'waiting' && job.status !== 'error') return;
-
-                updateJob(job.id, { status: 'processing', error: undefined });
-
-                try {
-                    const blob = await compressImage(job, settings);
-                    updateJob(job.id, {
-                        status: 'done',
-                        compressedSize: blob.size,
-                        outputBlob: blob
-                    });
-                } catch (e: any) {
-                    console.error('Job failed', e);
-                    updateJob(job.id, { status: 'error', error: e.message || 'Failed' });
-                }
-            }));
-
-            setGlobalStatus('done');
-        };
-
-        processQueue();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [globalStatus]);
-
+    // Handlers
     const handleDownloadZip = async () => {
         const doneFiles = files.filter(f => f.status === 'done');
         if (doneFiles.length === 0) return;
@@ -69,42 +76,126 @@ export const QueueView: React.FC = () => {
         }
     };
 
+    const handleTestFirst = () => {
+        // Find first waiting job
+        const first = files.find(f => f.status === 'waiting');
+        if (first) {
+            setGlobalStatus('processing');
+            // We want to stop after one. The effect hook runs on dependency change.
+            // But the effect hook logic processes *next* pending job.
+            // If we want to process just ONE, we need a special 'test-mode' or manually managing it.
+            // Simplest hack: Use a separate effect or just let it process one and then stop.
+            // But the current effect loops until all are done.
+            // Let's modify the effect to respect a 'single-step' flag? 
+            // Better: Just set status to 'processing', and then in the effect, check if we only wanted to test one?
+            // No, that's complex state.
+            // Alternative: Directly invoke worker for the test file here without globalStatus 'processing' loop.
+
+            updateJob(first.id, { status: 'processing' });
+
+            const worker = new Worker(new URL('../workers/processor.worker.ts', import.meta.url), {
+                type: 'module'
+            });
+
+            worker.onmessage = (e) => {
+                const { id, status, blob, error } = e.data;
+                if (status === 'done' && blob) {
+                    updateJob(id, {
+                        status: 'done',
+                        outputBlob: blob,
+                        compressedSize: blob.size
+                    });
+                } else if (status === 'error') {
+                    updateJob(id, { status: 'error', error });
+                }
+                worker.terminate();
+                // IMPORTANT: Do NOT set globalStatus to 'processing' loop. Keep it 'idle' or 'done'.
+                // If it was idle, it stays idle.
+            };
+
+            worker.postMessage({
+                id: first.id,
+                file: first.file,
+                settings
+            });
+        }
+    };
+
+    const sortedFiles = sortFiles(files, sortMode);
+    const savings = files.reduce((acc, f) => acc + (f.originalSize - (f.compressedSize || f.originalSize)), 0);
+    const totalSize = files.reduce((acc, f) => acc + f.originalSize, 0);
+    const savedPercent = totalSize > 0 ? (savings / totalSize) * 100 : 0;
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%' }}>
-            {/* Header Controls */}
+            {/* Header Stats */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 style={{ fontSize: '1.5rem' }}>Processing Queue</h2>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    {globalStatus === 'done' && (
-                        <button className="btn" onClick={resetQueue}>
-                            <Trash2 size={16} /> Clear All
-                        </button>
-                    )}
-                    {globalStatus === 'processing' && (
-                        <button className="btn" onClick={() => setGlobalStatus('stopped')}>
-                            Cancel
-                        </button>
-                    )}
+                <div>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Processing Queue</h2>
+                    <p style={{ color: 'hsl(var(--color-text-dim))' }}>{files.filter(f => f.status === 'done').length} / {files.length} completed</p>
+                </div>
+
+                {/* Sorting Controls */}
+                <div style={{ display: 'flex', gap: '0.5rem', background: 'hsl(var(--color-bg-card))', padding: '0.25rem', borderRadius: '6px' }}>
+                    <button
+                        className={`btn icon-btn ${sortMode === 'original' ? 'active' : ''}`}
+                        onClick={() => setSortMode('original')}
+                        title="Original Order"
+                        style={{ opacity: sortMode === 'original' ? 1 : 0.5 }}
+                    >
+                        Start
+                    </button>
+                    <button
+                        className={`btn icon-btn ${sortMode === 'name' ? 'active' : ''}`}
+                        onClick={() => setSortMode('name')}
+                        title="Sort by Name"
+                        style={{ opacity: sortMode === 'name' ? 1 : 0.5 }}
+                    >
+                        <ArrowDownAZ size={18} />
+                    </button>
+                    <button
+                        className={`btn icon-btn ${sortMode === 'size-desc' ? 'active' : ''}`}
+                        onClick={() => setSortMode('size-desc')}
+                        title="Sort by Size (Largest)"
+                        style={{ opacity: sortMode === 'size-desc' ? 1 : 0.5 }}
+                    >
+                        <ArrowUpNarrowWide size={18} />
+                    </button>
+                </div>
+
+                <div style={{ textAlign: 'right' }}>
+                    <div className="stat-value" style={{ color: 'hsl(var(--color-primary))' }}>{savedPercent.toFixed(1)}%</div>
+                    <div className="stat-label">Total Saved</div>
                 </div>
             </div>
 
-            {/* Progress Bar (Global) */}
+            {/* Progress Bar */}
             <div style={{ background: 'hsl(var(--color-bg))', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{
-                    height: '100%',
-                    background: 'hsl(var(--color-primary))',
-                    width: `${(files.filter(f => f.status === 'done').length / files.length) * 100}%`,
-                    transition: 'width 0.3s'
-                }} />
+                <div
+                    style={{
+                        height: '100%',
+                        background: 'hsl(var(--color-primary))',
+                        width: `${(files.filter(f => f.status === 'done').length / files.length) * 100}%`,
+                        transition: 'width 0.3s'
+                    }}
+                />
             </div>
+
+            {/* Test Button (Only if idle and has waiting files) */}
+            {globalStatus === 'idle' && files.some(f => f.status === 'waiting') && (
+                <button
+                    className="btn"
+                    onClick={handleTestFirst}
+                    style={{ alignSelf: 'flex-start', border: '1px solid hsl(var(--color-primary))', color: 'hsl(var(--color-primary))' }}
+                >
+                    <TestTube size={18} /> Test First Image
+                </button>
+            )}
 
             {/* List */}
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {files.map((job) => {
-                    const savings = job.compressedSize
-                        ? ((job.originalSize - job.compressedSize) / job.originalSize * 100).toFixed(1)
-                        : 0;
-
+                {sortedFiles.map(job => {
+                    const itemSavings = job.compressedSize ? ((job.originalSize - job.compressedSize) / job.originalSize * 100).toFixed(1) : 0;
                     return (
                         <div key={job.id} className="card" style={{
                             display: 'flex',
@@ -115,6 +206,14 @@ export const QueueView: React.FC = () => {
                                 job.status === 'done' ? '4px solid hsl(var(--color-success))' :
                                     '4px solid transparent'
                         }}>
+                            {/* Status Icon */}
+                            <div style={{
+                                width: '10px', height: '10px', borderRadius: '50%',
+                                background: job.status === 'done' ? 'hsl(var(--color-success))' :
+                                    job.status === 'processing' ? 'hsl(var(--color-primary))' :
+                                        job.status === 'error' ? 'hsl(var(--color-error))' : 'hsl(var(--color-border))'
+                            }} />
+
                             <div style={{ flex: 1, overflow: 'hidden' }}>
                                 <div style={{ fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {job.file.name}
@@ -141,7 +240,7 @@ export const QueueView: React.FC = () => {
                                         <Eye size={18} />
                                     </button>
                                     <div style={{ textAlign: 'right' }}>
-                                        <div style={{ color: 'hsl(var(--color-success))', fontWeight: 700 }}>{Number(savings) > 0 ? '-' : '+'}{Math.abs(Number(savings))}%</div>
+                                        <div style={{ color: 'hsl(var(--color-success))', fontWeight: 700 }}>{Number(itemSavings) > 0 ? '-' : '+'}{Math.abs(Number(itemSavings))}%</div>
                                     </div>
                                 </div>
                             )}
