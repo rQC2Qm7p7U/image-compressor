@@ -13,18 +13,40 @@ function App() {
   // but for now let's keep it manual or state-driven.
 
   return (
-    <div className="container">
-      <header style={{ marginBottom: '2rem', textAlign: 'center' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.03em', background: 'linear-gradient(135deg, #fff 0%, #999 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+    <div className="container" style={{
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      padding: '1rem',
+      maxWidth: '1200px',
+      margin: '0 auto',
+      boxSizing: 'border-box'
+    }}>
+      <header style={{ marginBottom: '1rem', textAlign: 'center', flexShrink: 0 }}>
+        <h1 style={{
+          fontSize: 'clamp(1.8rem, 4vw, 2.5rem)',
+          fontWeight: 800,
+          letterSpacing: '-0.03em',
+          background: 'linear-gradient(135deg, #fff 0%, #999 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          margin: 0
+        }}>
           ImgCompressor
         </h1>
-        <p style={{ color: 'hsl(var(--color-text-dim))', marginTop: '0.5rem' }}>
+        <p style={{ color: 'hsl(var(--color-text-dim))', marginTop: '0.2rem', fontSize: '0.9rem' }}>
           Premium Privacy-First Batch Compression
         </p>
       </header>
 
-      <main className="card" style={{ minHeight: '600px', display: 'flex', flexDirection: 'column' }}>
-        <nav style={{ display: 'flex', borderBottom: '1px solid hsl(var(--color-border))' }}>
+      <main className="card" style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0, // Critical for nested scroll
+        overflow: 'hidden' // Prevent card from spilling out
+      }}>
+        <nav style={{ display: 'flex', borderBottom: '1px solid hsl(var(--color-border))', flexShrink: 0 }}>
           <TabButton
             active={activeTab === 'import'}
             onClick={() => setActiveTab('import')}
@@ -47,7 +69,7 @@ function App() {
           />
         </nav>
 
-        <div style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
+        <div style={{ flex: 1, padding: '1.5rem', overflowY: 'auto' }}>
           {activeTab === 'import' && <ImportView onNext={() => setActiveTab('settings')} />}
           {activeTab === 'settings' && <SettingsView onNext={() => setActiveTab('queue')} />}
           {activeTab === 'queue' && <QueueView />}

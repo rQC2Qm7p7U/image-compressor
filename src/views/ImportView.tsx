@@ -48,7 +48,7 @@ export const ImportView: React.FC<ImportViewProps> = ({ onNext }) => {
                 style={{
                     border: '2px dashed ' + (isDragging ? 'hsl(var(--color-primary))' : 'hsl(var(--color-border))'),
                     borderRadius: 'var(--radius-md)',
-                    padding: '3rem',
+                    padding: '2rem',
                     textAlign: 'center',
                     background: isDragging ? 'hsl(var(--color-bg-hover))' : 'transparent',
                     cursor: 'pointer',
@@ -56,8 +56,8 @@ export const ImportView: React.FC<ImportViewProps> = ({ onNext }) => {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: '1rem',
-                    minHeight: files.length === 0 ? '300px' : '200px',
+                    gap: '0.8rem',
+                    minHeight: files.length === 0 ? '200px' : '120px',
                     justifyContent: 'center'
                 }}
             >

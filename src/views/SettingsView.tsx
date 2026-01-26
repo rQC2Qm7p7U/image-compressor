@@ -23,7 +23,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
     };
 
     return (
-        <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div>
                 <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Conversion Settings</h2>
                 <p style={{ color: 'hsl(var(--color-text-dim))' }}>Configure how your images will be compressed.</p>
