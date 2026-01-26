@@ -3,9 +3,12 @@ import { useAppStore } from '../store/useAppStore';
 import { Download, FolderInput, RefreshCw, Trash2, ArrowRight } from 'lucide-react';
 import { compressImage } from '../lib/imageProcessor';
 import { createZipFromJobs, downloadBlob, saveToFolder } from '../lib/exportUtils';
+import { CompareModal } from '../components/CompareModal';
+import { Eye } from 'lucide-react';
 
 export const QueueView: React.FC = () => {
     const { files, globalStatus, updateJob, setGlobalStatus, resetQueue, settings } = useAppStore();
+    const [compareJob, setCompareJob] = React.useState<string | null>(null);
 
     // WORKER MANAGEMENT
     useEffect(() => {
@@ -128,8 +131,18 @@ export const QueueView: React.FC = () => {
                             </div>
 
                             {job.status === 'done' && (
-                                <div style={{ textAlign: 'right' }}>
-                                    <div style={{ color: 'hsl(var(--color-success))', fontWeight: 700 }}>{Number(savings) > 0 ? '-' : '+'}{Math.abs(Number(savings))}%</div>
+                                <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
+                                    <button
+                                        className="btn icon-btn"
+                                        onClick={() => setCompareJob(job.id)}
+                                        title="Compare with Original"
+                                        style={{ padding: '0.4rem', height: 'auto' }}
+                                    >
+                                        <Eye size={18} />
+                                    </button>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ color: 'hsl(var(--color-success))', fontWeight: 700 }}>{Number(savings) > 0 ? '-' : '+'}{Math.abs(Number(savings))}%</div>
+                                    </div>
                                 </div>
                             )}
 
@@ -159,7 +172,7 @@ export const QueueView: React.FC = () => {
                             await saveToFolder(doneFiles);
                             alert('Files saved successfully!');
                         } catch (e: any) {
-                            if (e.message.includes('not supported')) {
+                            if (e.message?.includes('not supported')) {
                                 alert('This feature is only available in Chrome/Edge on Desktop.');
                             } else {
                                 console.error(e);
@@ -171,6 +184,16 @@ export const QueueView: React.FC = () => {
                     <FolderInput size={18} /> Save to Folder...
                 </button>
             </div>
+
+            {/* Compare Modal */}
+            {compareJob && (
+                <CompareModal
+                    isOpen={!!compareJob}
+                    onClose={() => setCompareJob(null)}
+                    originalFile={files.find(f => f.id === compareJob)?.file || null}
+                    compressedBlob={files.find(f => f.id === compareJob)?.outputBlob || null}
+                />
+            )}
         </div>
     );
 };
