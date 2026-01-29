@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useAppStore, type Job } from '../store/useAppStore';
-import { Download, FolderInput, RefreshCw, ArrowDownAZ, ArrowUpNarrowWide, TestTube, Eye } from 'lucide-react';
+import { Download, FolderInput, RefreshCw, ArrowDownAZ, ArrowUpNarrowWide, TestTube, Eye, Play, List } from 'lucide-react';
 import { createZipFromJobs, downloadBlob, saveToFolder } from '../lib/exportUtils';
 import { CompareModal } from '../components/CompareModal';
 
@@ -80,17 +80,6 @@ export const QueueView: React.FC = () => {
         // Find first waiting job
         const first = files.find(f => f.status === 'waiting');
         if (first) {
-            setGlobalStatus('processing');
-            // We want to stop after one. The effect hook runs on dependency change.
-            // But the effect hook logic processes *next* pending job.
-            // If we want to process just ONE, we need a special 'test-mode' or manually managing it.
-            // Simplest hack: Use a separate effect or just let it process one and then stop.
-            // But the current effect loops until all are done.
-            // Let's modify the effect to respect a 'single-step' flag? 
-            // Better: Just set status to 'processing', and then in the effect, check if we only wanted to test one?
-            // No, that's complex state.
-            // Alternative: Directly invoke worker for the test file here without globalStatus 'processing' loop.
-
             updateJob(first.id, { status: 'processing' });
 
             const worker = new Worker(new URL('../workers/processor.worker.ts', import.meta.url), {
@@ -109,8 +98,6 @@ export const QueueView: React.FC = () => {
                     updateJob(id, { status: 'error', error });
                 }
                 worker.terminate();
-                // IMPORTANT: Do NOT set globalStatus to 'processing' loop. Keep it 'idle' or 'done'.
-                // If it was idle, it stays idle.
             };
 
             worker.postMessage({
@@ -119,6 +106,10 @@ export const QueueView: React.FC = () => {
                 settings
             });
         }
+    };
+
+    const handleStartProcessing = () => {
+        setGlobalStatus('processing');
     };
 
     const sortedFiles = sortFiles(files, sortMode);
@@ -143,7 +134,7 @@ export const QueueView: React.FC = () => {
                         title="Original Order"
                         style={{ opacity: sortMode === 'original' ? 1 : 0.5 }}
                     >
-                        Start
+                        <List size={18} />
                     </button>
                     <button
                         className={`btn icon-btn ${sortMode === 'name' ? 'active' : ''}`}
@@ -181,16 +172,25 @@ export const QueueView: React.FC = () => {
                 />
             </div>
 
-            {/* Test Button (Only if idle and has waiting files) */}
+            {/* Actions Bar (Start / Test) */}
             {globalStatus === 'idle' && files.some(f => f.status === 'waiting') && (
-                <button
-                    className="btn"
-                    onClick={handleTestFirst}
-                    title="Process only the first image to verify settings"
-                    style={{ alignSelf: 'flex-start', border: '1px solid hsl(var(--color-primary))', color: 'hsl(var(--color-primary))' }}
-                >
-                    <TestTube size={18} /> Test First Image
-                </button>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button
+                        className="btn btn-primary"
+                        onClick={handleStartProcessing}
+                        title="Start processing all images in queue"
+                    >
+                        <Play size={18} fill="currentColor" /> Start Queue
+                    </button>
+                    <button
+                        className="btn"
+                        onClick={handleTestFirst}
+                        title="Process only the first image to verify settings"
+                        style={{ border: '1px solid hsl(var(--color-primary))', color: 'hsl(var(--color-primary))' }}
+                    >
+                        <TestTube size={18} /> Test First Image
+                    </button>
+                </div>
             )}
 
             {/* List */}
