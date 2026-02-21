@@ -3,6 +3,7 @@ import { useAppStore, type Job } from '../store/useAppStore';
 import { Download, FolderInput, RefreshCw, ArrowDownAZ, ArrowUpNarrowWide, TestTube, Eye, Play, List } from 'lucide-react';
 import { createZipFromJobs, downloadBlob, saveToFolder } from '../lib/exportUtils';
 import { CompareModal } from '../components/CompareModal';
+import { compressImage } from '../lib/imageProcessor';
 
 type SortMode = 'original' | 'name' | 'size-desc';
 
@@ -18,49 +19,10 @@ const sortFiles = (files: Job[], mode: SortMode): Job[] => {
 };
 
 export const QueueView: React.FC = () => {
-    const { files, globalStatus, updateJob, setGlobalStatus, settings } = useAppStore();
+    const { files, globalStatus, updateJob, setGlobalStatus, settings, resetQueue } = useAppStore();
     const [compareJob, setCompareJob] = React.useState<string | null>(null);
     const [sortMode, setSortMode] = React.useState<SortMode>('original');
-
-    // WORKER MANAGEMENT
-    useEffect(() => {
-        if (globalStatus === 'processing') {
-            const pendingJob = files.find(f => f.status === 'waiting' || (f.status === 'error' && !f.error));
-            if (pendingJob) {
-                updateJob(pendingJob.id, { status: 'processing', error: undefined });
-
-                // Spawn worker
-                const worker = new Worker(new URL('../workers/processor.worker.ts', import.meta.url), {
-                    type: 'module'
-                });
-
-                worker.onmessage = (e) => {
-                    const { id, status, blob, error } = e.data;
-                    if (status === 'done' && blob) {
-                        updateJob(id, {
-                            status: 'done',
-                            outputBlob: blob,
-                            compressedSize: blob.size
-                        });
-                    } else if (status === 'error') {
-                        updateJob(id, { status: 'error', error });
-                    }
-                    worker.terminate();
-                };
-
-                worker.postMessage({
-                    id: pendingJob.id,
-                    file: pendingJob.file,
-                    settings
-                });
-            } else {
-                // All done?
-                if (files.every(f => f.status === 'done' || f.status === 'error')) {
-                    setGlobalStatus('done');
-                }
-            }
-        }
-    }, [files, globalStatus, settings]); // Re-run when files change (one finishes)
+    const autoDownloadTriggered = React.useRef(false);
 
     // Handlers
     const handleDownloadZip = async () => {
@@ -68,43 +30,101 @@ export const QueueView: React.FC = () => {
         if (doneFiles.length === 0) return;
 
         try {
-            const zipBlob = await createZipFromJobs(doneFiles);
-            downloadBlob(zipBlob, 'images.zip');
+            if (doneFiles.length === 1) {
+                // If only one file, download it directly without zipping
+                const job = doneFiles[0];
+                if (job.outputBlob) {
+                    let name = job.file.name;
+                    const ext = job.outputBlob.type === 'image/webp' ? '.webp' : '.jpg';
+                    const nameParts = name.split('.');
+                    if (nameParts.length > 1) nameParts.pop();
+                    name = nameParts.join('.') + ext;
+
+                    downloadBlob(job.outputBlob, name);
+                }
+            } else {
+                // Multiple files, zip them
+                const zipBlob = await createZipFromJobs(doneFiles);
+                downloadBlob(zipBlob, 'images.zip');
+            }
+
+            // Auto-clear the queue after a short delay so the user sees completion
+            setTimeout(() => {
+                resetQueue();
+            }, 1500);
+
         } catch (e) {
-            alert('Failed to create ZIP');
+            alert('Failed to create ZIP or download file');
             console.error(e);
         }
     };
 
-    const handleTestFirst = () => {
+    // WORKER MANAGEMENT
+    useEffect(() => {
+        if (globalStatus === 'processing') {
+            autoDownloadTriggered.current = false; // Reset trigger on new processing
+
+            // Find ALL waiting jobs to process them in parallel (WorkerPool will handle concurrency)
+            const pendingJobs = files.filter(f => f.status === 'waiting' || (f.status === 'error' && !f.error));
+
+            if (pendingJobs.length > 0) {
+                // Mark all as processing immediately so we don't pick them up again in the next render
+                pendingJobs.forEach(job => {
+                    updateJob(job.id, { status: 'processing', error: undefined });
+                });
+
+                // Start processing all of them
+                pendingJobs.forEach(async (job) => {
+                    try {
+                        const blob = await compressImage(job, settings);
+                        updateJob(job.id, {
+                            status: 'done',
+                            outputBlob: blob,
+                            compressedSize: blob.size
+                        });
+                    } catch (error: any) {
+                        updateJob(job.id, { status: 'error', error: error.message || 'Unknown error' });
+                    }
+                });
+            } else {
+                // Check if all are done (no processing, no waiting)
+                const isFinished = files.every(f => f.status === 'done' || f.status === 'error');
+                const hasProcessing = files.some(f => f.status === 'processing');
+
+                if (isFinished && !hasProcessing) {
+                    setGlobalStatus('done');
+                }
+            }
+        }
+    }, [files, globalStatus, settings, updateJob, setGlobalStatus]);
+
+    // AUTO-DOWNLOAD
+    useEffect(() => {
+        if (globalStatus === 'done' && files.length > 0 && !autoDownloadTriggered.current) {
+            // Check if there are actually any successfully processed files
+            const doneFiles = files.filter(f => f.status === 'done');
+            if (doneFiles.length > 0) {
+                autoDownloadTriggered.current = true;
+                handleDownloadZip();
+            }
+        }
+    }, [globalStatus, files]);
+
+    const handleTestFirst = async () => {
         // Find first waiting job
         const first = files.find(f => f.status === 'waiting');
         if (first) {
             updateJob(first.id, { status: 'processing' });
-
-            const worker = new Worker(new URL('../workers/processor.worker.ts', import.meta.url), {
-                type: 'module'
-            });
-
-            worker.onmessage = (e) => {
-                const { id, status, blob, error } = e.data;
-                if (status === 'done' && blob) {
-                    updateJob(id, {
-                        status: 'done',
-                        outputBlob: blob,
-                        compressedSize: blob.size
-                    });
-                } else if (status === 'error') {
-                    updateJob(id, { status: 'error', error });
-                }
-                worker.terminate();
-            };
-
-            worker.postMessage({
-                id: first.id,
-                file: first.file,
-                settings
-            });
+            try {
+                const blob = await compressImage(first, settings);
+                updateJob(first.id, {
+                    status: 'done',
+                    outputBlob: blob,
+                    compressedSize: blob.size
+                });
+            } catch (error: any) {
+                updateJob(first.id, { status: 'error', error: error.message || 'Unknown error' });
+            }
         }
     };
 
@@ -264,6 +284,11 @@ export const QueueView: React.FC = () => {
                             const doneFiles = files.filter(f => f.status === 'done');
                             await saveToFolder(doneFiles);
                             alert('Files saved successfully!');
+
+                            // Auto-clear the queue after a short delay
+                            setTimeout(() => {
+                                resetQueue();
+                            }, 1500);
                         } catch (e: any) {
                             if (e.message?.includes('not supported')) {
                                 alert('This feature is only available in Chrome/Edge on Desktop.');

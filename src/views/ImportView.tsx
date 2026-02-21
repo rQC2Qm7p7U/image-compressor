@@ -1,13 +1,13 @@
 import React, { useRef, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { Upload, X, FileImage, ArrowRight } from 'lucide-react';
+import { Upload } from 'lucide-react';
 
 interface ImportViewProps {
-    onNext: () => void;
+    onFilesAdded: () => void;
 }
 
-export const ImportView: React.FC<ImportViewProps> = ({ onNext }) => {
-    const { files, addFiles, removeFile } = useAppStore();
+export const ImportView: React.FC<ImportViewProps> = ({ onFilesAdded }) => {
+    const { addFiles } = useAppStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = useState(false);
 
@@ -16,6 +16,7 @@ export const ImportView: React.FC<ImportViewProps> = ({ onNext }) => {
         const validFiles = Array.from(fileList).filter(f => f.type.startsWith('image/'));
         if (validFiles.length > 0) {
             addFiles(validFiles);
+            onFilesAdded();
         }
     };
 
@@ -33,8 +34,6 @@ export const ImportView: React.FC<ImportViewProps> = ({ onNext }) => {
         setIsDragging(false);
         handleFiles(e.dataTransfer.files);
     };
-
-    const totalSize = files.reduce((acc, f) => acc + f.originalSize, 0);
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '2rem' }}>
@@ -57,7 +56,7 @@ export const ImportView: React.FC<ImportViewProps> = ({ onNext }) => {
                     flexDirection: 'column',
                     alignItems: 'center',
                     gap: '0.8rem',
-                    minHeight: files.length === 0 ? '200px' : '120px',
+                    minHeight: '200px',
                     justifyContent: 'center'
                 }}
             >
@@ -82,80 +81,6 @@ export const ImportView: React.FC<ImportViewProps> = ({ onNext }) => {
                     onChange={(e) => handleFiles(e.target.files)}
                 />
             </div>
-
-            {/* File List */}
-            {files.length > 0 && (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>
-                            Selected Images <span style={{ color: 'hsl(var(--color-text-dim))', fontWeight: 400 }}>({files.length})</span>
-                        </h3>
-                        <span style={{ fontSize: '0.9rem', color: 'hsl(var(--color-text-dim))' }}>
-                            Total: {(totalSize / 1024 / 1024).toFixed(2)} MB
-                        </span>
-                    </div>
-
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-                        gap: '0.5rem',
-                        overflowY: 'auto',
-                        maxHeight: '300px',
-                        paddingRight: '0.5rem'
-                    }}>
-                        {files.map((job) => (
-                            <div key={job.id} className="card" style={{ position: 'relative', aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
-                                {/* Note: In a real app we'd create object URLs for previews, but for now just showing an icon to avoid memory leaks if we don't clean up. 
-                     We can add proper thumbnails later if needed. */}
-                                <FileImage size={32} color="hsl(var(--color-text-dim))" />
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); removeFile(job.id); }}
-                                    title="Remove this file"
-                                    style={{
-                                        position: 'absolute',
-                                        top: '4px',
-                                        right: '4px',
-                                        background: 'rgba(0,0,0,0.6)',
-                                        border: 'none',
-                                        color: 'white',
-                                        borderRadius: '50%',
-                                        width: '24px',
-                                        height: '24px',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}
-                                >
-                                    <X size={14} />
-                                </button>
-                                <span style={{
-                                    position: 'absolute',
-                                    bottom: 0,
-                                    left: 0,
-                                    right: 0,
-                                    background: 'rgba(0,0,0,0.7)',
-                                    color: 'white',
-                                    fontSize: '0.7rem',
-                                    padding: '4px',
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    textAlign: 'center'
-                                }}>
-                                    {job.file.name}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                        <button className="btn btn-primary" onClick={onNext} title="Proceed to compression settings">
-                            Continue to Settings <ArrowRight size={18} />
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

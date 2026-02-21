@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ImportView } from './views/ImportView';
 import { SettingsView } from './views/SettingsView';
 import { QueueView } from './views/QueueView';
@@ -6,11 +6,15 @@ import { CloudUpload, Settings, List } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
 
 function App() {
-  const { files } = useAppStore();
+  const { files, setGlobalStatus } = useAppStore();
   const [activeTab, setActiveTab] = useState<'import' | 'settings' | 'queue'>('import');
 
-  // Auto-switch to settings or queue when files are added could be a nice UX,
-  // but for now let's keep it manual or state-driven.
+  // Auto-redirect to Import when the Queue is cleared
+  useEffect(() => {
+    if (activeTab === 'queue' && files.length === 0) {
+      setActiveTab('import');
+    }
+  }, [files.length, activeTab]);
 
   return (
     <div className="container" style={{
@@ -70,7 +74,10 @@ function App() {
         </nav>
 
         <div style={{ flex: 1, padding: '1.5rem', overflowY: 'auto' }}>
-          {activeTab === 'import' && <ImportView onNext={() => setActiveTab('settings')} />}
+          {activeTab === 'import' && <ImportView onFilesAdded={() => {
+            setActiveTab('queue');
+            setGlobalStatus('processing');
+          }} />}
           {activeTab === 'settings' && <SettingsView onNext={() => setActiveTab('queue')} />}
           {activeTab === 'queue' && <QueueView />}
         </div>

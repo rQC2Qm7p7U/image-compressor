@@ -46,7 +46,7 @@ export const useAppStore = create<AppState>((set) => ({
 
     addFiles: (newFiles) => set((state) => {
         const newJobs: Job[] = newFiles.map((file) => ({
-            id: Math.random().toString(36).substring(2, 9) + Date.now().toString(36),
+            id: crypto.randomUUID(),
             file,
             originalSize: file.size,
             status: 'waiting',

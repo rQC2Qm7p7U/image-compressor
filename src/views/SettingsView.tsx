@@ -1,6 +1,5 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { Play } from 'lucide-react';
 
 interface SettingsViewProps {
     onNext: () => void;
@@ -169,12 +168,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
             <button
                 className="btn btn-primary"
                 onClick={handleStart}
-                disabled={files.length === 0}
-                title="Start processing the queue"
+                title="Save settings and go to queue"
                 style={{ padding: '1rem', fontSize: '1.1rem' }}
             >
-                <Play size={20} fill="currentColor" />
-                Start Conversion ({files.length} images)
+                {files.length === 0 ? 'Save Settings & Go to Queue' : `Start Conversion (${files.length} images)`}
             </button>
         </div>
     );

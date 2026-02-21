@@ -33,13 +33,11 @@ export const createZipFromJobs = async (files: Job[]): Promise<Blob> => {
 };
 
 export const saveToFolder = async (files: Job[]) => {
-    // @ts-ignore - Types for showDirectoryPicker might not be in default lib
-    if (typeof window.showDirectoryPicker !== 'function') {
+    if (typeof (window as any).showDirectoryPicker !== 'function') {
         throw new Error('File System Access API not supported');
     }
 
-    // @ts-ignore
-    const dirHandle = await window.showDirectoryPicker();
+    const dirHandle = await (window as any).showDirectoryPicker();
 
     let savedCount = 0;
     for (const job of files) {
@@ -50,13 +48,9 @@ export const saveToFolder = async (files: Job[]) => {
             if (nameParts.length > 1) nameParts.pop();
             name = nameParts.join('.') + ext;
 
-            // @ts-ignore
             const fileHandle = await dirHandle.getFileHandle(name, { create: true });
-            // @ts-ignore
             const writable = await fileHandle.createWritable();
-            // @ts-ignore
             await writable.write(job.outputBlob);
-            // @ts-ignore
             await writable.close();
             savedCount++;
         }
