@@ -127,27 +127,22 @@ function TabButton({ active, onClick, icon, label, count }: { active: boolean, o
   );
 }
 
+import { useRegisterSW } from 'virtual:pwa-register/react';
+
 function AppFooter() {
-  // @ts-ignore Vite injected global
   const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
 
-  const handleUpdate = async () => {
-    if ('caches' in window) {
-      try {
-        const cacheNames = await caches.keys();
-        await Promise.all(cacheNames.map(name => caches.delete(name)));
-        // @ts-ignore
-        window.location.reload(true);
-      } catch (err) {
-        console.error('Error clearing caches:', err);
-        // @ts-ignore
-        window.location.reload(true);
-      }
-    } else {
-      // @ts-ignore
-      window.location.reload(true);
-    }
-  };
+  const {
+    needRefresh: [needRefresh],
+    updateServiceWorker,
+  } = useRegisterSW({
+    onRegistered(r: ServiceWorkerRegistration | undefined) {
+      console.log('SW Registered: ', r);
+    },
+    onRegisterError(error: any) {
+      console.log('SW registration error', error);
+    },
+  });
 
   return (
     <footer style={{
@@ -162,7 +157,7 @@ function AppFooter() {
     }}>
       <div>
         <span>Created by </span>
-        <a href="https://github.com/LeoWorks1" target="_blank" rel="noopener noreferrer" style={{ color: 'hsl(var(--color-primary))', textDecoration: 'none' }}>LeoWorks</a>
+        <a href="https://kwork.ru/user/leoworks" target="_blank" rel="noopener noreferrer" style={{ color: 'hsl(var(--color-primary))', textDecoration: 'none' }}>LeoWorks</a>
         <span style={{ margin: '0 0.5rem' }}>•</span>
         <a href="https://github.com/rQC2Qm7p7U/image-compressor" target="_blank" rel="noopener noreferrer" style={{ color: 'hsl(var(--color-text-dim))', textDecoration: 'underline' }}>GitHub</a>
         <span style={{ margin: '0 0.5rem' }}>•</span>
@@ -170,23 +165,27 @@ function AppFooter() {
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <span>v{version}</span>
-        <button
-          onClick={handleUpdate}
-          style={{
-            background: 'transparent',
-            border: '1px solid hsl(var(--color-border))',
-            color: 'hsl(var(--color-text))',
-            padding: '2px 8px',
-            borderRadius: '4px',
-            fontSize: '0.75rem',
-            cursor: 'pointer',
-            transition: 'background 0.2s',
-          }}
-          onMouseOver={(e) => (e.currentTarget.style.background = 'hsl(var(--color-bg-hover))')}
-          onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
-        >
-          Обновить
-        </button>
+        {needRefresh && (
+          <button
+            onClick={() => updateServiceWorker(true)}
+            style={{
+              background: 'hsl(var(--color-primary))',
+              color: 'black',
+              border: 'none',
+              padding: '2px 8px',
+              borderRadius: '6px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'opacity 0.2s',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.opacity = '0.9')}
+            onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
+          >
+            Update Available 🚀
+          </button>
+        )}
       </div>
     </footer>
   );
