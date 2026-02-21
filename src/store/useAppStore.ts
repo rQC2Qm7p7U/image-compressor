@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export type JobStatus = 'waiting' | 'processing' | 'done' | 'error';
 
@@ -35,50 +36,59 @@ interface AppState {
     resetQueue: () => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
-    files: [],
-    settings: {
-        format: 'jpeg',
-        quality: 80,
-        resize: false,
-        maxWidth: 1920,
-    },
-    globalStatus: 'idle',
+export const useAppStore = create<AppState>()(
+    persist(
+        (set) => ({
+            files: [],
+            settings: {
+                format: 'jpeg',
+                quality: 80,
+                resize: false,
+                maxWidth: 1920,
+            },
+            globalStatus: 'idle',
 
-    addFiles: (newFiles) => set((state) => {
-        const newJobs: Job[] = newFiles.map((file) => ({
-            id: crypto.randomUUID(),
-            file,
-            originalSize: file.size,
-            status: 'waiting',
-            // We'll generate preview URLs in the ImportView for performance/cleanup
-        }));
-        return { files: [...state.files, ...newJobs] };
-    }),
-
-    removeFile: (id) => set((state) => ({
-        files: state.files.filter((f) => f.id !== id),
-    })),
-
-    updateSettings: (newSettings) => set((state) => ({
-        settings: { ...state.settings, ...newSettings },
-    })),
-
-    updateJob: (id, updates) => set((state) => ({
-        files: state.files.map((f) => f.id === id ? { ...f, ...updates } : f),
-    })),
-
-    updateJobsBatch: (updatesList) => set((state) => {
-        const updateMap = new Map(updatesList.map(u => [u.id, u.updates]));
-        return {
-            files: state.files.map((f) => {
-                const updates = updateMap.get(f.id);
-                return updates ? { ...f, ...updates } : f;
+            addFiles: (newFiles) => set((state) => {
+                const newJobs: Job[] = newFiles.map((file) => ({
+                    id: crypto.randomUUID(),
+                    file,
+                    originalSize: file.size,
+                    status: 'waiting',
+                }));
+                return { files: [...state.files, ...newJobs] };
             }),
-        };
-    }),
 
-    setGlobalStatus: (status) => set({ globalStatus: status }),
+            removeFile: (id) => set((state) => ({
+                files: state.files.filter((f) => f.id !== id),
+            })),
 
-    resetQueue: () => set({ files: [], globalStatus: 'idle' }),
-}));
+            updateSettings: (newSettings) => set((state) => ({
+                settings: { ...state.settings, ...newSettings },
+            })),
+
+            updateJob: (id, updates) => set((state) => ({
+                files: state.files.map((f) => f.id === id ? { ...f, ...updates } : f),
+            })),
+
+            updateJobsBatch: (updatesList) => set((state) => {
+                const updateMap = new Map(updatesList.map(u => [u.id, u.updates]));
+                return {
+                    files: state.files.map((f) => {
+                        const updates = updateMap.get(f.id);
+                        return updates ? { ...f, ...updates } : f;
+                    }),
+                };
+            }),
+
+            setGlobalStatus: (status) => set({ globalStatus: status }),
+
+            resetQueue: () => set({ files: [], globalStatus: 'idle' }),
+        }),
+        {
+            name: 'imgcompressor-settings',
+            version: 1,
+            // Only persist user settings — files and globalStatus are ephemeral
+            partialize: (state) => ({ settings: state.settings }),
+        }
+    )
+);
