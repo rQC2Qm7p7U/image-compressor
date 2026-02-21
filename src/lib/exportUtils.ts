@@ -2,6 +2,13 @@ import { zipSync } from 'fflate';
 import type { Zippable } from 'fflate';
 import type { Job } from '../store/useAppStore';
 
+export const getExtensionFromMime = (mimeType: string): string => {
+    if (mimeType.includes('webp')) return '.webp';
+    if (mimeType.includes('avif')) return '.avif';
+    if (mimeType.includes('png')) return '.png';
+    return '.jpg';
+};
+
 export const createZipFromJobs = async (files: Job[]): Promise<Blob> => {
     const data: Zippable = {};
 
@@ -16,7 +23,7 @@ export const createZipFromJobs = async (files: Job[]): Promise<Blob> => {
 
             // Determine filename extension
             let name = job.file.name;
-            const ext = job.outputBlob.type === 'image/webp' ? '.webp' : '.jpg';
+            const ext = getExtensionFromMime(job.outputBlob.type);
 
             // Replace old extension or append?
             // "image.png" -> "image.webp"
@@ -43,7 +50,7 @@ export const saveToFolder = async (files: Job[]) => {
     for (const job of files) {
         if (job.status === 'done' && job.outputBlob) {
             let name = job.file.name;
-            const ext = job.outputBlob.type === 'image/webp' ? '.webp' : '.jpg';
+            const ext = getExtensionFromMime(job.outputBlob.type);
             const nameParts = name.split('.');
             if (nameParts.length > 1) nameParts.pop();
             name = nameParts.join('.') + ext;

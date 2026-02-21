@@ -75,7 +75,13 @@ export const compressImage = async (job: Job, settings: Settings): Promise<Blob>
                 if (id !== job.id) return;
 
                 worker.removeEventListener('message', handler);
-                if (status === 'done') resolve(blob);
+                if (status === 'done') {
+                    // Re-apply the Blob type just in case postMessage stripped it
+                    const fallbackType = settings.format === 'jpeg' ? 'image/jpeg' :
+                        settings.format === 'avif' ? 'image/avif' : 'image/webp';
+                    const typedBlob = new Blob([blob], { type: blob.type || fallbackType });
+                    resolve(typedBlob);
+                }
                 else reject(new Error(error));
             };
 

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useAppStore, type Job } from '../store/useAppStore';
 import { Download, FolderInput, RefreshCw, ArrowDownAZ, ArrowUpNarrowWide, TestTube, Eye, Play, List } from 'lucide-react';
-import { createZipFromJobs, downloadBlob, saveToFolder } from '../lib/exportUtils';
+import { createZipFromJobs, downloadBlob, saveToFolder, getExtensionFromMime } from '../lib/exportUtils';
 import { CompareModal } from '../components/CompareModal';
 import { compressImage } from '../lib/imageProcessor';
 
@@ -35,7 +35,7 @@ export const QueueView: React.FC = () => {
                 const job = doneFiles[0];
                 if (job.outputBlob) {
                     let name = job.file.name;
-                    const ext = job.outputBlob.type === 'image/webp' ? '.webp' : '.jpg';
+                    const ext = getExtensionFromMime(job.outputBlob.type);
                     const nameParts = name.split('.');
                     if (nameParts.length > 1) nameParts.pop();
                     name = nameParts.join('.') + ext;
