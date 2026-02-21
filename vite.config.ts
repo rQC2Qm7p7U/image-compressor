@@ -37,7 +37,7 @@ export default defineConfig({
     })
   ],
   optimizeDeps: {
-    exclude: ['@jsquash/jpeg', '@jsquash/webp']
+    exclude: ['@jsquash/jpeg', '@jsquash/webp', '@jsquash/avif']
   },
   server: {
     headers: {

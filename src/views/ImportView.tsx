@@ -13,7 +13,12 @@ export const ImportView: React.FC<ImportViewProps> = ({ onFilesAdded }) => {
 
     const handleFiles = (fileList: FileList | null) => {
         if (!fileList) return;
-        const validFiles = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+        const validFiles = Array.from(fileList).filter(f =>
+            f.type.startsWith('image/') ||
+            f.name.toLowerCase().endsWith('.heic') ||
+            f.name.toLowerCase().endsWith('.heif') ||
+            f.name.toLowerCase().endsWith('.avif')
+        );
         if (validFiles.length > 0) {
             addFiles(validFiles);
             onFilesAdded();
@@ -75,7 +80,8 @@ export const ImportView: React.FC<ImportViewProps> = ({ onFilesAdded }) => {
                 <input
                     type="file"
                     multiple
-                    accept="image/*"
+                    title="Choose images to compile"
+                    accept="image/*,.heic,.heif,.avif"
                     ref={fileInputRef}
                     style={{ display: 'none' }}
                     onChange={(e) => handleFiles(e.target.files)}

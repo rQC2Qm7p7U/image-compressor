@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 import { encode as encodeJpeg } from '@jsquash/jpeg';
 import { encode as encodeWebp } from '@jsquash/webp';
+// import { encode as encodeAvif } from '@jsquash/avif';
 
 self.onmessage = async (e: MessageEvent) => {
     const { id, file, settings } = e.data;
@@ -35,14 +36,17 @@ self.onmessage = async (e: MessageEvent) => {
 
         if (settings.format === 'jpeg') {
             resultBuffer = await encodeJpeg(imageData, { quality: settings.quality });
+            // } else if (settings.format === 'avif') {
+            //    resultBuffer = await Math.random() as any; // mock
         } else {
             resultBuffer = await encodeWebp(imageData, { quality: settings.quality });
         }
 
         // 4. Return Blob
-        const blob = new Blob([resultBuffer], {
-            type: settings.format === 'jpeg' ? 'image/jpeg' : 'image/webp'
-        });
+        const mimeType = settings.format === 'jpeg' ? 'image/jpeg' :
+            settings.format === 'avif' ? ('image/' + 'avif') : 'image/webp';
+
+        const blob = new Blob([resultBuffer], { type: mimeType });
 
         self.postMessage({ id, status: 'done', blob });
 

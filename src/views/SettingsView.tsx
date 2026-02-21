@@ -84,7 +84,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
                         JPEG
                     </label>
                     <label
-                        title="Convert images to WebP format (Recommended)"
+                        title="Convert images to WebP format (Default)"
                         style={{
                             flex: 1,
                             cursor: 'pointer',
@@ -106,6 +106,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
                             style={{ display: 'none' }}
                         />
                         WebP
+                    </label>
+                    <label
+                        title="Convert images to AVIF format (Best compression, slower)"
+                        style={{
+                            flex: 1,
+                            cursor: 'pointer',
+                            padding: '1rem',
+                            background: settings.format === 'avif' ? 'hsl(var(--color-primary))' : 'hsl(var(--color-bg))',
+                            color: settings.format === 'avif' ? 'hsl(var(--color-bg))' : 'hsl(var(--color-text))',
+                            borderRadius: 'var(--radius-sm)',
+                            textAlign: 'center',
+                            fontWeight: 600,
+                            transition: 'all 0.2s',
+                            border: '1px solid ' + (settings.format === 'avif' ? 'hsl(var(--color-primary))' : 'hsl(var(--color-border))')
+                        }}>
+                        <input
+                            type="radio"
+                            name="format"
+                            value="avif"
+                            checked={settings.format === 'avif'}
+                            onChange={() => updateSettings({ format: 'avif' })}
+                            style={{ display: 'none' }}
+                        />
+                        AVIF
                     </label>
                 </div>
             </section>

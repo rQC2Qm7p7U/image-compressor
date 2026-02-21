@@ -14,7 +14,7 @@ export interface Job {
 }
 
 export interface Settings {
-    format: 'jpeg' | 'webp';
+    format: 'jpeg' | 'webp' | 'avif';
     quality: number; // 0-100
     resize: boolean;
     maxWidth: number;

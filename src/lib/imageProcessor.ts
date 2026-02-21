@@ -1,4 +1,5 @@
 import type { Job, Settings } from '../store/useAppStore';
+import heic2any from 'heic2any';
 
 const MAX_CONCURRENCY = navigator.hardwareConcurrency ? Math.min(4, navigator.hardwareConcurrency - 1) : 2;
 
@@ -50,7 +51,23 @@ class WorkerPool {
 // Singleton instance
 export const imageEngine = new WorkerPool(MAX_CONCURRENCY);
 
-export const compressImage = (job: Job, settings: Settings): Promise<Blob> => {
+export const compressImage = async (job: Job, settings: Settings): Promise<Blob> => {
+    let fileToProcess: File | Blob = job.file;
+
+    // Pre-convert HEIC/HEIF on the main thread since heic2any requires DOM canvas
+    const isHeic = job.file.type === 'image/heic' || job.file.type === 'image/heif' ||
+        job.file.name.toLowerCase().endsWith('.heic') || job.file.name.toLowerCase().endsWith('.heif');
+
+    if (isHeic) {
+        try {
+            const converted = await heic2any({ blob: job.file, toType: 'image/jpeg' });
+            fileToProcess = Array.isArray(converted) ? converted[0] : converted;
+        } catch (err) {
+            console.error('Failed to convert HEIC to JPEG', err);
+            throw new Error('Failed to parse HEIC file');
+        }
+    }
+
     return imageEngine.run((worker) => {
         return new Promise((resolve, reject) => {
             const handler = (e: MessageEvent) => {
@@ -65,7 +82,7 @@ export const compressImage = (job: Job, settings: Settings): Promise<Blob> => {
             worker.addEventListener('message', handler);
             worker.postMessage({
                 id: job.id,
-                file: job.file,
+                file: fileToProcess,
                 settings
             });
         });
