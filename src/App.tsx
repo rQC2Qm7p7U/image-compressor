@@ -82,6 +82,8 @@ function App() {
           {activeTab === 'queue' && <QueueView />}
         </div>
       </main>
+
+      <AppFooter />
     </div>
   );
 }
@@ -122,6 +124,71 @@ function TabButton({ active, onClick, icon, label, count }: { active: boolean, o
         </span>
       )}
     </button>
+  );
+}
+
+function AppFooter() {
+  // @ts-ignore Vite injected global
+  const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
+
+  const handleUpdate = async () => {
+    if ('caches' in window) {
+      try {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+        // @ts-ignore
+        window.location.reload(true);
+      } catch (err) {
+        console.error('Error clearing caches:', err);
+        // @ts-ignore
+        window.location.reload(true);
+      }
+    } else {
+      // @ts-ignore
+      window.location.reload(true);
+    }
+  };
+
+  return (
+    <footer style={{
+      marginTop: '1rem',
+      textAlign: 'center',
+      fontSize: '0.8rem',
+      color: 'hsl(var(--color-text-dim))',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0.5rem',
+      alignItems: 'center'
+    }}>
+      <div>
+        <span>Created by </span>
+        <a href="https://github.com/LeoWorks1" target="_blank" rel="noopener noreferrer" style={{ color: 'hsl(var(--color-primary))', textDecoration: 'none' }}>LeoWorks</a>
+        <span style={{ margin: '0 0.5rem' }}>•</span>
+        <a href="https://github.com/rQC2Qm7p7U/image-compressor" target="_blank" rel="noopener noreferrer" style={{ color: 'hsl(var(--color-text-dim))', textDecoration: 'underline' }}>GitHub</a>
+        <span style={{ margin: '0 0.5rem' }}>•</span>
+        <a href="https://image-compressor-leoworks.netlify.app" target="_blank" rel="noopener noreferrer" style={{ color: 'hsl(var(--color-text-dim))', textDecoration: 'underline' }}>Netlify</a>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <span>v{version}</span>
+        <button
+          onClick={handleUpdate}
+          style={{
+            background: 'transparent',
+            border: '1px solid hsl(var(--color-border))',
+            color: 'hsl(var(--color-text))',
+            padding: '2px 8px',
+            borderRadius: '4px',
+            fontSize: '0.75rem',
+            cursor: 'pointer',
+            transition: 'background 0.2s',
+          }}
+          onMouseOver={(e) => (e.currentTarget.style.background = 'hsl(var(--color-bg-hover))')}
+          onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
+        >
+          Обновить
+        </button>
+      </div>
+    </footer>
   );
 }
 
