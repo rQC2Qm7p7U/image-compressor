@@ -19,7 +19,7 @@ const sortFiles = (files: Job[], mode: SortMode): Job[] => {
 };
 
 export const QueueView: React.FC = () => {
-    const { files, globalStatus, updateJob, setGlobalStatus, settings, resetQueue } = useAppStore();
+    const { files, globalStatus, updateJob, updateJobsBatch, setGlobalStatus, settings, resetQueue } = useAppStore();
     const [compareJob, setCompareJob] = React.useState<string | null>(null);
     const [sortMode, setSortMode] = React.useState<SortMode>('original');
     const autoDownloadTriggered = React.useRef(false);
@@ -68,10 +68,11 @@ export const QueueView: React.FC = () => {
             const pendingJobs = files.filter(f => f.status === 'waiting' || (f.status === 'error' && !f.error));
 
             if (pendingJobs.length > 0) {
-                // Mark all as processing immediately so we don't pick them up again in the next render
-                pendingJobs.forEach(job => {
-                    updateJob(job.id, { status: 'processing', error: undefined });
-                });
+                // Mark all as processing immediately using batch update
+                updateJobsBatch(pendingJobs.map(job => ({
+                    id: job.id,
+                    updates: { status: 'processing', error: undefined }
+                })));
 
                 // Start processing all of them
                 pendingJobs.forEach(async (job) => {
@@ -96,7 +97,7 @@ export const QueueView: React.FC = () => {
                 }
             }
         }
-    }, [files, globalStatus, settings, updateJob, setGlobalStatus]);
+    }, [files, globalStatus, settings, updateJob, updateJobsBatch, setGlobalStatus]);
 
     // AUTO-DOWNLOAD
     useEffect(() => {
@@ -132,9 +133,9 @@ export const QueueView: React.FC = () => {
         setGlobalStatus('processing');
     };
 
-    const sortedFiles = sortFiles(files, sortMode);
-    const savings = files.reduce((acc, f) => acc + (f.originalSize - (f.compressedSize || f.originalSize)), 0);
-    const totalSize = files.reduce((acc, f) => acc + f.originalSize, 0);
+    const sortedFiles = React.useMemo(() => sortFiles(files, sortMode), [files, sortMode]);
+    const savings = React.useMemo(() => files.reduce((acc, f) => acc + (f.originalSize - (f.compressedSize || f.originalSize)), 0), [files]);
+    const totalSize = React.useMemo(() => files.reduce((acc, f) => acc + f.originalSize, 0), [files]);
     const savedPercent = totalSize > 0 ? (savings / totalSize) * 100 : 0;
 
     return (

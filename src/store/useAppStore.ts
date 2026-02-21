@@ -30,6 +30,7 @@ interface AppState {
     removeFile: (id: string) => void;
     updateSettings: (settings: Partial<Settings>) => void;
     updateJob: (id: string, updates: Partial<Job>) => void;
+    updateJobsBatch: (updates: { id: string; updates: Partial<Job> }[]) => void;
     setGlobalStatus: (status: AppState['globalStatus']) => void;
     resetQueue: () => void;
 }
@@ -66,6 +67,16 @@ export const useAppStore = create<AppState>((set) => ({
     updateJob: (id, updates) => set((state) => ({
         files: state.files.map((f) => f.id === id ? { ...f, ...updates } : f),
     })),
+
+    updateJobsBatch: (updatesList) => set((state) => {
+        const updateMap = new Map(updatesList.map(u => [u.id, u.updates]));
+        return {
+            files: state.files.map((f) => {
+                const updates = updateMap.get(f.id);
+                return updates ? { ...f, ...updates } : f;
+            }),
+        };
+    }),
 
     setGlobalStatus: (status) => set({ globalStatus: status }),
 

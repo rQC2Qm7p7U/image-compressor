@@ -14,6 +14,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5242880 // 5 MiB to allow the AVIF WASM encoder
+      },
       manifest: {
         name: 'Image Compressor Pro',
         short_name: 'ImgCompressor',

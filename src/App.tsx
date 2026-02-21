@@ -4,6 +4,8 @@ import { SettingsView } from './views/SettingsView';
 import { QueueView } from './views/QueueView';
 import { CloudUpload, Settings, List } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
+import { TabButton } from './components/TabButton';
+import { AppFooter } from './components/AppFooter';
 
 function App() {
   const { files, setGlobalStatus } = useAppStore();
@@ -85,109 +87,6 @@ function App() {
 
       <AppFooter />
     </div>
-  );
-}
-
-function TabButton({ active, onClick, icon, label, count }: { active: boolean, onClick: () => void, icon: any, label: string, count?: number }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        flex: 1,
-        background: active ? 'hsl(var(--color-bg-hover))' : 'transparent',
-        border: 'none',
-        borderBottom: active ? '2px solid hsl(var(--color-primary))' : '2px solid transparent',
-        color: active ? 'hsl(var(--color-text))' : 'hsl(var(--color-text-dim))',
-        padding: '1rem',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '0.5rem',
-        transition: 'all 0.2s',
-        fontSize: '0.9rem',
-        fontWeight: 500
-      }}
-    >
-      {icon}
-      {label}
-      {count !== undefined && (
-        <span style={{
-          background: 'hsl(var(--color-primary))',
-          color: 'black',
-          fontSize: '0.7rem',
-          padding: '2px 6px',
-          borderRadius: '10px',
-          fontWeight: 700
-        }}>
-          {count}
-        </span>
-      )}
-    </button>
-  );
-}
-
-import { useRegisterSW } from 'virtual:pwa-register/react';
-
-function AppFooter() {
-  const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
-
-  const {
-    needRefresh: [needRefresh],
-    updateServiceWorker,
-  } = useRegisterSW({
-    onRegistered(r: ServiceWorkerRegistration | undefined) {
-      console.log('SW Registered: ', r);
-    },
-    onRegisterError(error: any) {
-      console.log('SW registration error', error);
-    },
-  });
-
-  return (
-    <footer style={{
-      marginTop: '1rem',
-      textAlign: 'center',
-      fontSize: '0.8rem',
-      color: 'hsl(var(--color-text-dim))',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '0.5rem',
-      alignItems: 'center'
-    }}>
-      <div>
-        <span>Created by </span>
-        <a href="https://kwork.ru/user/leoworks" target="_blank" rel="noopener noreferrer" style={{ color: 'hsl(var(--color-primary))', textDecoration: 'none' }}>LeoWorks</a>
-        <span style={{ margin: '0 0.5rem' }}>•</span>
-        <a href="https://github.com/rQC2Qm7p7U/image-compressor" target="_blank" rel="noopener noreferrer" style={{ color: 'hsl(var(--color-text-dim))', textDecoration: 'underline' }}>GitHub</a>
-        <span style={{ margin: '0 0.5rem' }}>•</span>
-        <a href="https://image-compressor-leoworks.netlify.app" target="_blank" rel="noopener noreferrer" style={{ color: 'hsl(var(--color-text-dim))', textDecoration: 'underline' }}>Netlify</a>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <span>v{version}</span>
-        {needRefresh && (
-          <button
-            onClick={() => updateServiceWorker(true)}
-            style={{
-              background: 'hsl(var(--color-primary))',
-              color: 'black',
-              border: 'none',
-              padding: '2px 8px',
-              borderRadius: '6px',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'opacity 0.2s',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.opacity = '0.9')}
-            onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
-          >
-            Update Available 🚀
-          </button>
-        )}
-      </div>
-    </footer>
   );
 }
 
