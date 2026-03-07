@@ -1,0 +1,109 @@
+name: Create Missing Releases
+
+on:
+  workflow_dispatch: # Manual trigger only
+
+jobs:
+  create-releases:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Need full history for commit refs
+
+      - name: Create v1.1.4
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.1.4
+          target_commitish: 2c3117e
+          name: "Release v1.1.4 — Security Hardening"
+          body: |
+            ## Security & Infrastructure
+            - Remove hardcoded GitHub token from `.env` — now uses `RELEASE_TOKEN` env variable
+            - Add production security headers to `netlify.toml` (CSP, COEP, COOP, X-Frame-Options)
+            - Fix TypeScript errors with `wicg-file-system-access` types
+            - Add write permissions to `GITHUB_TOKEN` for `gh-pages` deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Create v1.1.5
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.1.5
+          target_commitish: 9c42e06
+          name: "Release v1.1.5 — Code Quality"
+          body: |
+            ## Code Quality Improvements
+            - Replace `forEach(async)` with `Promise.allSettled` for robust parallel processing
+            - Extract `buildOutputFilename()` utility, eliminating 3× code duplication
+            - Add `WorkerPool.terminate()` method for proper memory cleanup
+            - Move `.spin` CSS animation from DOM injection into `index.css`
+            - Add Toast notification system replacing all `alert()` calls
+            - Fix `useEffect` dependencies to use derived counters instead of full `files` array
+            - Add `min`/`max` constraints to maxWidth input
+            - Remove `console.log` from Service Worker callbacks
+            - Remove `as any` casts, improve TypeScript strictness
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Create v1.2.0
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.2.0
+          target_commitish: 015b06c
+          name: "Release v1.2.0 — UX Simplification"
+          body: |
+            ## Major UX Simplification
+            - **Remove Queue tab entirely** for a streamlined two-tab experience (Compress + Settings)
+            - Integrate compression logic directly into the Import view
+            - Add inline progress bar that automatically starts when images are dropped
+            - Automate ZIP generation and download immediately upon completion
+            - Remove `CompareModal` component (105 lines)
+            - Clean up `useAppStore` — removed `globalStatus`, `updateJobsBatch` and other unused actions
+
+            > **−784 lines of code** removed in this release
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Create v1.2.1
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.2.1
+          target_commitish: 21fbb87
+          name: "Release v1.2.1 — Bug Fixes"
+          body: |
+            ## Bug Fixes
+            - Fix stray `$` symbol displayed as text in savings message
+            - Fix stale settings closure — compression now always uses current settings via `useRef`
+            - Fix fractional pixel dimensions in resize via `Math.round()`
+            - Remove dead `saveToFolder` code after Queue tab removal
+            - Replace `error: any` with `error: unknown` in worker for TypeScript strictness
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Create v1.2.2
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.2.2
+          target_commitish: f475a7c
+          name: "Release v1.2.2 — Cleaner Settings UI"
+          body: |
+            ## UI Cleanup
+            - Remove Webmaster Presets section from Settings for a cleaner, less cluttered interface
+            - Settings now focuses on three core controls: Output Format, Quality, and Resize
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Create v1.2.3
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.2.3
+          target_commitish: 4729815
+          name: "Release v1.2.3 — Critical Bug Fixes"
+          body: |
+            ## Critical Bug Fixes
+            - **Fix race condition**: replace N sequential `updateJob()` calls with a single batch `setState()` — previously only the last file got marked as "processing"
+            - **Fix AVIF quality**: pass `quality` setting to AVIF encoder (was silently using codec defaults)
+            - Remove dead `removeFile` action and unused `previewUrl` field from store
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
