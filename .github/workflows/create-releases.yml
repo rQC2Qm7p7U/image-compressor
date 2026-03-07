@@ -22,7 +22,7 @@ jobs:
 
           echo "Creating v1.1.4..."
           gh release create v1.1.4 \
-            --target 2c3117e \
+            --target 2c3117ea7e2a71fd93806fb847f76ba938494d3b \
             --title "Release v1.1.4 — Security Hardening" \
             --notes "## Security & Infrastructure
           - Remove hardcoded GitHub token from \`.env\` — now uses \`RELEASE_TOKEN\` env variable
@@ -32,7 +32,7 @@ jobs:
 
           echo "Creating v1.1.5..."
           gh release create v1.1.5 \
-            --target 9c42e06 \
+            --target 9c42e06aa24d2ea5f7e4290ed2e4ee307a6d9b06 \
             --title "Release v1.1.5 — Code Quality" \
             --notes "## Code Quality Improvements
           - Replace \`forEach(async)\` with \`Promise.allSettled\` for robust parallel processing
@@ -47,7 +47,7 @@ jobs:
 
           echo "Creating v1.2.0..."
           gh release create v1.2.0 \
-            --target 015b06c \
+            --target 015b06cc2d5a2eeadeeb52067d49e387aaf88d5d \
             --title "Release v1.2.0 — UX Simplification" \
             --notes "## Major UX Simplification
           - **Remove Queue tab entirely** for a streamlined two-tab experience (Compress + Settings)
@@ -61,7 +61,7 @@ jobs:
 
           echo "Creating v1.2.1..."
           gh release create v1.2.1 \
-            --target 21fbb87 \
+            --target 21fbb87d196755eb6c4174109496b8b355c0cccc \
             --title "Release v1.2.1 — Bug Fixes" \
             --notes "## Bug Fixes
           - Fix stray dollar sign displayed as text in savings message
@@ -72,7 +72,7 @@ jobs:
 
           echo "Creating v1.2.2..."
           gh release create v1.2.2 \
-            --target f475a7c \
+            --target f475a7cf1030df6ec9d2c7563de2b156a122975b \
             --title "Release v1.2.2 — Cleaner Settings UI" \
             --notes "## UI Cleanup
           - Remove Webmaster Presets section from Settings for a cleaner interface
@@ -80,7 +80,7 @@ jobs:
 
           echo "Creating v1.2.3..."
           gh release create v1.2.3 \
-            --target 4729815 \
+            --target 472981567acdba5af47a6511ac21907e77f340bf \
             --title "Release v1.2.3 — Critical Bug Fixes" \
             --notes "## Critical Bug Fixes
           - **Fix race condition**: replace N sequential updateJob() calls with a single batch setState()
