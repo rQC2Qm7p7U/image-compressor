@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Upload, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { compressImage } from '../lib/imageProcessor';
@@ -14,17 +14,25 @@ export const ImportView: React.FC = () => {
     const settingsRef = useRef(settings);
     settingsRef.current = settings; // always fresh reference
 
-    // Derived counts
-    const totalFiles = files.length;
-    const doneCount = files.filter(f => f.status === 'done').length;
-    const errorCount = files.filter(f => f.status === 'error').length;
+    // Track which batches we've already started processing to prevent race conditions
+    const processedBatchRef = useRef(0);
+
+    // Derived counts — cached with useMemo to avoid O(n) on every render
+    const { totalFiles, doneCount, errorCount, savedSavings, totalSize } = useMemo(() => {
+        let done = 0, errors = 0, savings = 0, total = 0;
+        for (const f of files) {
+            if (f.status === 'done') done++;
+            if (f.status === 'error') errors++;
+            savings += f.originalSize - (f.compressedSize || f.originalSize);
+            total += f.originalSize;
+        }
+        return { totalFiles: files.length, doneCount: done, errorCount: errors, savedSavings: savings, totalSize: total };
+    }, [files]);
+
     const isProcessing = totalFiles > 0 && doneCount + errorCount < totalFiles;
     const isFinished = totalFiles > 0 && doneCount + errorCount === totalFiles;
 
-    const savedSavings = files.reduce((acc, f) => acc + (f.originalSize - (f.compressedSize || f.originalSize)), 0);
-    const totalSize = files.reduce((acc, f) => acc + f.originalSize, 0);
-
-    const handleFiles = (fileList: FileList | null) => {
+    const handleFiles = useCallback((fileList: FileList | null) => {
         if (!fileList) return;
         const validFiles = Array.from(fileList).filter(f =>
             f.type.startsWith('image/') ||
@@ -36,14 +44,20 @@ export const ImportView: React.FC = () => {
             autoDownloadTriggered.current = false;
             addFiles(validFiles);
         }
-    };
+    }, [addFiles]);
 
-    // Auto processing logic
+    // Auto processing logic — uses a batch counter to prevent duplicate processing
     useEffect(() => {
+        const currentBatch = files.length;
+        // Skip if we already processed this batch size (prevents StrictMode / rapid-add races)
+        if (currentBatch === 0 || currentBatch === processedBatchRef.current) return;
+
         const pendingJobs = files.filter(f => f.status === 'waiting' || (f.status === 'error' && !f.error));
         if (pendingJobs.length === 0) return;
 
-        // Mark all pending as processing in ONE batch to avoid race condition
+        processedBatchRef.current = currentBatch;
+
+        // Mark all pending as processing in ONE batch
         const pendingIds = new Set(pendingJobs.map(j => j.id));
         useAppStore.setState(state => ({
             files: state.files.map(f =>
@@ -61,15 +75,28 @@ export const ImportView: React.FC = () => {
                 });
             })
         ).then(results => {
+            // Batch all error updates into a single setState
+            const errorUpdates: Array<{ id: string; error: string }> = [];
             results.forEach((result, i) => {
                 if (result.status === 'rejected') {
                     const error = result.reason as Error;
-                    updateJob(pendingJobs[i].id, {
-                        status: 'error',
+                    errorUpdates.push({
+                        id: pendingJobs[i].id,
                         error: error.message || 'Unknown error'
                     });
                 }
             });
+
+            if (errorUpdates.length > 0) {
+                const errorIds = new Map(errorUpdates.map(e => [e.id, e.error]));
+                useAppStore.setState(state => ({
+                    files: state.files.map(f =>
+                        errorIds.has(f.id)
+                            ? { ...f, status: 'error' as const, error: errorIds.get(f.id) }
+                            : f
+                    )
+                }));
+            }
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [files.length]); // Intentionally only depend on array length to avoid loops
@@ -125,8 +152,10 @@ export const ImportView: React.FC = () => {
         handleFiles(e.dataTransfer.files);
     };
 
+    const dropZoneClass = `drop-zone${isDragging ? ' dragging' : ''}${isProcessing ? ' processing' : ''}`;
+
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '2rem' }}>
+        <div className="import-view">
             {/* Drop Zone */}
             <div
                 onClick={() => !isProcessing && fileInputRef.current?.click()}
@@ -134,35 +163,14 @@ export const ImportView: React.FC = () => {
                 onDragLeave={onDragLeave}
                 onDrop={onDrop}
                 title="Click to select files or drag them here"
-                style={{
-                    border: '2px dashed ' + (isDragging ? 'hsl(var(--color-primary))' : 'hsl(var(--color-border))'),
-                    borderRadius: 'var(--radius-md)',
-                    padding: '2rem',
-                    textAlign: 'center',
-                    background: isDragging ? 'hsl(var(--color-bg-hover))' : 'transparent',
-                    cursor: isProcessing ? 'wait' : 'pointer',
-                    opacity: isProcessing ? 0.6 : 1,
-                    transition: 'all 0.2s',
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '0.8rem',
-                    minHeight: '200px',
-                    justifyContent: 'center'
-                }}
+                className={dropZoneClass}
             >
-                <div style={{
-                    background: 'hsl(var(--color-bg-hover))',
-                    padding: '1rem',
-                    borderRadius: '50%',
-                    color: 'hsl(var(--color-primary))'
-                }}>
+                <div className="drop-zone__icon">
                     <Upload size={32} />
                 </div>
                 <div>
-                    <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>Drag & Drop images here</h3>
-                    <p style={{ color: 'hsl(var(--color-text-dim))' }}>or click to browse</p>
+                    <h3 className="drop-zone__title">Drag & Drop images here</h3>
+                    <p className="drop-zone__hint">or click to browse</p>
                 </div>
                 <input
                     type="file"
@@ -171,39 +179,40 @@ export const ImportView: React.FC = () => {
                     accept="image/*,.heic,.heif,.avif"
                     ref={fileInputRef}
                     style={{ display: 'none' }}
-                    onChange={(e) => handleFiles(e.target.files)}
+                    onChange={(e) => { handleFiles(e.target.files); e.target.value = ''; }}
                     disabled={isProcessing}
                 />
             </div>
 
             {/* Progress Bar Area */}
             {totalFiles > 0 && (
-                <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', animation: 'toast-in 0.3s ease' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            {isProcessing ? <RefreshCw className="spin" size={18} color="hsl(var(--color-primary))" /> : <CheckCircle2 size={18} color="hsl(var(--color-success))" />}
-                            <span style={{ fontWeight: 600 }}>
+                <div className="card progress-card">
+                    <div className="progress-header">
+                        <div className="progress-label">
+                            {isProcessing
+                                ? <RefreshCw className="spin" size={18} color="hsl(var(--color-primary))" />
+                                : <CheckCircle2 size={18} color="hsl(var(--color-success))" />
+                            }
+                            <span className="progress-label__text">
                                 {isProcessing ? 'Compressing images...' : 'Compression complete'}
                             </span>
                         </div>
-                        <span style={{ color: 'hsl(var(--color-text-dim))', fontSize: '0.9rem' }}>
+                        <span className="progress-counter">
                             {doneCount + errorCount} / {totalFiles}
                         </span>
                     </div>
 
                     {/* Bar */}
-                    <div style={{ background: 'hsl(var(--color-bg-hover))', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div style={{
-                            height: '100%',
-                            background: isFinished ? 'hsl(var(--color-success))' : 'hsl(var(--color-primary))',
-                            width: `${((doneCount + errorCount) / totalFiles) * 100}%`,
-                            transition: 'width 0.3s ease, background 0.3s ease'
-                        }} />
+                    <div className="progress-bar">
+                        <div
+                            className={`progress-bar__fill${isFinished ? ' done' : ''}`}
+                            style={{ width: `${((doneCount + errorCount) / totalFiles) * 100}%` }}
+                        />
                     </div>
 
                     {/* Stats when done */}
                     {isFinished && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: 'hsl(var(--color-text-dim))' }}>
+                        <div className="progress-stats">
                             <span>Saved {(savedSavings / 1024 / 1024).toFixed(1)} MB</span>
                             <span>Downloading automatically...</span>
                         </div>

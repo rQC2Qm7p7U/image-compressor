@@ -25,7 +25,18 @@ export const createZipFromJobs = async (files: Job[]): Promise<Blob> => {
         if (job.status === 'done' && job.outputBlob) {
             const buffer = await job.outputBlob.arrayBuffer();
             const uint8 = new Uint8Array(buffer);
-            const name = buildOutputFilename(job.file.name, job.outputBlob.type);
+            let name = buildOutputFilename(job.file.name, job.outputBlob.type);
+
+            // Resolve filename collisions (e.g. photo.png + photo.jpg → photo.webp x2)
+            if (data[name]) {
+                const dotIdx = name.lastIndexOf('.');
+                const base = dotIdx > 0 ? name.slice(0, dotIdx) : name;
+                const ext = dotIdx > 0 ? name.slice(dotIdx) : '';
+                let counter = 1;
+                while (data[`${base}_${counter}${ext}`]) counter++;
+                name = `${base}_${counter}${ext}`;
+            }
+
             data[name] = uint8;
         }
     }

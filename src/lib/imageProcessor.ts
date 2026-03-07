@@ -64,6 +64,11 @@ class WorkerPool {
 // Singleton instance
 export const imageEngine = new WorkerPool(MAX_CONCURRENCY);
 
+// Cleanup workers on HMR to prevent leaks during development
+if (import.meta.hot) {
+    import.meta.hot.dispose(() => imageEngine.terminate());
+}
+
 export const compressImage = async (job: Job, settings: Settings): Promise<Blob> => {
     let fileToProcess: File | Blob = job.file;
 
