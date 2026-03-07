@@ -1,0 +1,29 @@
+/*
+  Production security headers for Netlify / Cloudflare Pages / GitHub Pages (via CF).
+  These extend the dev-only headers set in vite.config.ts to also cover production.
+*/
+
+/*
+  Apply to all routes.
+*/
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Required for SharedArrayBuffer (used by WASM encoders in Web Workers)
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "require-corp"
+
+    # Restrict resource loading to same origin; allow WASM execution
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'self'"
+
+    # Prevent clickjacking
+    X-Frame-Options = "DENY"
+
+    # Block MIME-type sniffing
+    X-Content-Type-Options = "nosniff"
+
+    # Referrer policy — don't leak URL to third parties
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+    # Limit browser features
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"

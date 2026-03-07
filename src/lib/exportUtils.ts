@@ -1,3 +1,4 @@
+/// <reference types="wicg-file-system-access" />
 import { zipSync } from 'fflate';
 import type { Zippable } from 'fflate';
 import type { Job } from '../store/useAppStore';
@@ -40,11 +41,11 @@ export const createZipFromJobs = async (files: Job[]): Promise<Blob> => {
 };
 
 export const saveToFolder = async (files: Job[]) => {
-    if (typeof (window as any).showDirectoryPicker !== 'function') {
+    if (typeof window.showDirectoryPicker !== 'function') {
         throw new Error('File System Access API not supported');
     }
 
-    const dirHandle = await (window as any).showDirectoryPicker();
+    const dirHandle = await window.showDirectoryPicker();
 
     let savedCount = 0;
     for (const job of files) {

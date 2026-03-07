@@ -1,18 +1,20 @@
 import https from 'https';
-import fs from 'fs';
 
-const tokenMatch = fs.readFileSync('.env', 'utf8').match(/GITHUB_TOKEN=(.+)/);
-const token = tokenMatch ? tokenMatch[1].trim() : null;
+// Token must be passed as an environment variable:
+//   RELEASE_TOKEN=<your_token> node create-release.js
+// Never store tokens in files — use environment variables or CI secrets.
+const token = process.env.RELEASE_TOKEN;
 
 if (!token) {
-    console.error('No GITHUB_TOKEN found in .env');
+    console.error('Error: RELEASE_TOKEN environment variable is not set.');
+    console.error('Usage: RELEASE_TOKEN=<your_token> node create-release.js');
     process.exit(1);
 }
 
 const data = JSON.stringify({
-    tag_name: 'v1.1.2',
-    name: 'Release v1.1.2',
-    body: '## Whats Changed\n- Optimized memory usage (freed createImageBitmap buffers)\n- Enabled AVIF WebAssembly encoder\n- Added batch state updates for the Queue\n- Extracted inline React components\n- Updated PWA caching limits for WASM',
+    tag_name: 'v1.1.4',
+    name: 'Release v1.1.4',
+    body: '## Security\n- Removed hardcoded `GITHUB_TOKEN` from `.env` file\n- `create-release.js` now reads token from `RELEASE_TOKEN` environment variable instead of reading from file\n- Added `netlify.toml` with production security headers (COOP, COEP, CSP, X-Frame-Options, X-Content-Type-Options)\n- Removed `@ts-ignore` in `processor.worker.ts`\n- Removed `as any` cast in `exportUtils.ts`, replaced with proper `wicg-file-system-access` types',
     draft: false,
     prerelease: false,
     generate_release_notes: true

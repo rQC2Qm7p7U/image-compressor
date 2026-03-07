@@ -8,8 +8,7 @@ self.onmessage = async (e: MessageEvent) => {
 
     try {
         // 1. Decode
-        // @ts-ignore
-        const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+        const bitmap = await createImageBitmap(file as ImageBitmapSource, { imageOrientation: 'from-image' });
         const { width, height } = calculateSize(bitmap.width, bitmap.height, settings.resize, settings.maxWidth);
 
 
