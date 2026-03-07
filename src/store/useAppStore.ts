@@ -6,7 +6,6 @@ export type JobStatus = 'waiting' | 'processing' | 'done' | 'error';
 export interface Job {
     id: string;
     file: File;
-    previewUrl?: string; // For UI preview
     status: JobStatus;
     originalSize: number;
     compressedSize?: number;
@@ -26,7 +25,6 @@ interface AppState {
     settings: Settings;
     // Actions
     addFiles: (newFiles: File[]) => void;
-    removeFile: (id: string) => void;
     updateSettings: (settings: Partial<Settings>) => void;
     updateJob: (id: string, updates: Partial<Job>) => void;
     clearAll: () => void;
@@ -52,10 +50,6 @@ export const useAppStore = create<AppState>()(
                 }));
                 return { files: [...state.files, ...newJobs] };
             }),
-
-            removeFile: (id) => set((state) => ({
-                files: state.files.filter((f) => f.id !== id),
-            })),
 
             updateSettings: (newSettings) => set((state) => ({
                 settings: { ...state.settings, ...newSettings },

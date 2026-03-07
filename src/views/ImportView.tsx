@@ -43,8 +43,13 @@ export const ImportView: React.FC = () => {
         const pendingJobs = files.filter(f => f.status === 'waiting' || (f.status === 'error' && !f.error));
         if (pendingJobs.length === 0) return;
 
-        // Mark as processing
-        pendingJobs.forEach(job => updateJob(job.id, { status: 'processing', error: undefined }));
+        // Mark all pending as processing in ONE batch to avoid race condition
+        const pendingIds = new Set(pendingJobs.map(j => j.id));
+        useAppStore.setState(state => ({
+            files: state.files.map(f =>
+                pendingIds.has(f.id) ? { ...f, status: 'processing' as const, error: undefined } : f
+            )
+        }));
 
         Promise.allSettled(
             pendingJobs.map(async (job) => {

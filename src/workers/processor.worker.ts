@@ -39,7 +39,7 @@ self.onmessage = async (e: MessageEvent) => {
         if (settings.format === 'jpeg') {
             resultBuffer = await encodeJpeg(imageData, { quality: settings.quality });
         } else if (settings.format === 'avif') {
-            resultBuffer = await encodeAvif(imageData); // Quality setting for AVIF might need CQ/Q mapped if added
+            resultBuffer = await encodeAvif(imageData, { quality: settings.quality });
         } else {
             resultBuffer = await encodeWebp(imageData, { quality: settings.quality });
         }
