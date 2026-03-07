@@ -24,16 +24,12 @@ export interface Settings {
 interface AppState {
     files: Job[];
     settings: Settings;
-    globalStatus: 'idle' | 'processing' | 'done' | 'stopped';
-
     // Actions
     addFiles: (newFiles: File[]) => void;
     removeFile: (id: string) => void;
     updateSettings: (settings: Partial<Settings>) => void;
     updateJob: (id: string, updates: Partial<Job>) => void;
-    updateJobsBatch: (updates: { id: string; updates: Partial<Job> }[]) => void;
-    setGlobalStatus: (status: AppState['globalStatus']) => void;
-    resetQueue: () => void;
+    clearAll: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -41,12 +37,11 @@ export const useAppStore = create<AppState>()(
         (set) => ({
             files: [],
             settings: {
-                format: 'jpeg',
+                format: 'webp', // Changed default to webp as it was standard
                 quality: 80,
                 resize: false,
                 maxWidth: 1920,
             },
-            globalStatus: 'idle',
 
             addFiles: (newFiles) => set((state) => {
                 const newJobs: Job[] = newFiles.map((file) => ({
@@ -70,19 +65,7 @@ export const useAppStore = create<AppState>()(
                 files: state.files.map((f) => f.id === id ? { ...f, ...updates } : f),
             })),
 
-            updateJobsBatch: (updatesList) => set((state) => {
-                const updateMap = new Map(updatesList.map(u => [u.id, u.updates]));
-                return {
-                    files: state.files.map((f) => {
-                        const updates = updateMap.get(f.id);
-                        return updates ? { ...f, ...updates } : f;
-                    }),
-                };
-            }),
-
-            setGlobalStatus: (status) => set({ globalStatus: status }),
-
-            resetQueue: () => set({ files: [], globalStatus: 'idle' }),
+            clearAll: () => set({ files: [] }),
         }),
         {
             name: 'imgcompressor-settings',
