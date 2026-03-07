@@ -3,6 +3,9 @@ name: Create Missing Releases
 on:
   workflow_dispatch: # Manual trigger only
 
+permissions:
+  contents: write
+
 jobs:
   create-releases:
     runs-on: ubuntu-latest
@@ -24,7 +27,7 @@ jobs:
             - Fix TypeScript errors with `wicg-file-system-access` types
             - Add write permissions to `GITHUB_TOKEN` for `gh-pages` deploy
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create v1.1.5
         uses: softprops/action-gh-release@v2
@@ -44,7 +47,7 @@ jobs:
             - Remove `console.log` from Service Worker callbacks
             - Remove `as any` casts, improve TypeScript strictness
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create v1.2.0
         uses: softprops/action-gh-release@v2
@@ -63,7 +66,7 @@ jobs:
 
             > **−784 lines of code** removed in this release
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create v1.2.1
         uses: softprops/action-gh-release@v2
@@ -79,7 +82,7 @@ jobs:
             - Remove dead `saveToFolder` code after Queue tab removal
             - Replace `error: any` with `error: unknown` in worker for TypeScript strictness
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create v1.2.2
         uses: softprops/action-gh-release@v2
@@ -92,7 +95,7 @@ jobs:
             - Remove Webmaster Presets section from Settings for a cleaner, less cluttered interface
             - Settings now focuses on three core controls: Output Format, Quality, and Resize
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create v1.2.3
         uses: softprops/action-gh-release@v2
@@ -106,4 +109,4 @@ jobs:
             - **Fix AVIF quality**: pass `quality` setting to AVIF encoder (was silently using codec defaults)
             - Remove dead `removeFile` action and unused `previewUrl` field from store
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
