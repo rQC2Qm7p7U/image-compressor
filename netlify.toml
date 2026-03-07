@@ -1,11 +1,6 @@
-/*
-  Production security headers for Netlify / Cloudflare Pages / GitHub Pages (via CF).
-  These extend the dev-only headers set in vite.config.ts to also cover production.
-*/
+# Production security headers for Netlify.
+# These extend the dev-only headers set in vite.config.ts to also cover production.
 
-/*
-  Apply to all routes.
-*/
 [[headers]]
   for = "/*"
   [headers.values]
@@ -22,7 +17,7 @@
     # Block MIME-type sniffing
     X-Content-Type-Options = "nosniff"
 
-    # Referrer policy — don't leak URL to third parties
+    # Referrer policy
     Referrer-Policy = "strict-origin-when-cross-origin"
 
     # Limit browser features
