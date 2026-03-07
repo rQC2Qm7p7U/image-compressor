@@ -52,9 +52,10 @@ self.onmessage = async (e: MessageEvent) => {
 
         self.postMessage({ id, status: 'done', blob });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Worker error:', error);
-        self.postMessage({ id, status: 'error', error: error.message || 'Unknown worker error' });
+        const msg = error instanceof Error ? error.message : 'Unknown worker error';
+        self.postMessage({ id, status: 'error', error: msg });
     }
 };
 
@@ -63,5 +64,5 @@ function calculateSize(srcWidth: number, srcHeight: number, shouldResize: boolea
         return { width: srcWidth, height: srcHeight };
     }
     const ratio = maxWidth / srcWidth;
-    return { width: maxWidth, height: srcHeight * ratio };
+    return { width: maxWidth, height: Math.round(srcHeight * ratio) };
 }

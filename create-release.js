@@ -12,9 +12,9 @@ if (!token) {
 }
 
 const data = JSON.stringify({
-    tag_name: 'v1.2.0',
-    name: 'Release v1.2.0',
-    body: '## UX Simplification & Refactoring\n- Removed `Queue` tab entirely for a more streamlined experience\n- Reduced app to 2 main tabs: Compress and Settings\n- Integrated compression logic directly into the Import view\n- Added inline progress bar that automatically starts when images are dropped\n- Automated ZIP generation and download immediately upon completion\n- Removed `CompareModal` and cleaned up `useAppStore` unneeded actions',
+    tag_name: 'v1.2.1',
+    name: 'Release v1.2.1',
+    body: '## Bug Fixes\n- Fix stray `$` symbol displayed in savings text\n- Fix stale settings closure — compression now always uses current settings via useRef\n- Fix fractional pixel dimensions in resize (Math.round)\n- Remove dead `saveToFolder` code after Queue tab removal\n- Replace `error: any` with `error: unknown` in worker',
     draft: false,
     prerelease: false,
     generate_release_notes: true

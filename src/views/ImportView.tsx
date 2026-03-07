@@ -11,6 +11,8 @@ export const ImportView: React.FC = () => {
     const [isDragging, setIsDragging] = useState(false);
     const { showToast } = useToast();
     const autoDownloadTriggered = useRef(false);
+    const settingsRef = useRef(settings);
+    settingsRef.current = settings; // always fresh reference
 
     // Derived counts
     const totalFiles = files.length;
@@ -46,7 +48,7 @@ export const ImportView: React.FC = () => {
 
         Promise.allSettled(
             pendingJobs.map(async (job) => {
-                const blob = await compressImage(job, settings);
+                const blob = await compressImage(job, settingsRef.current);
                 updateJob(job.id, {
                     status: 'done',
                     outputBlob: blob,
@@ -197,7 +199,7 @@ export const ImportView: React.FC = () => {
                     {/* Stats when done */}
                     {isFinished && (
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: 'hsl(var(--color-text-dim))' }}>
-                            <span>Saved ${(savedSavings / 1024 / 1024).toFixed(1)} MB</span>
+                            <span>Saved {(savedSavings / 1024 / 1024).toFixed(1)} MB</span>
                             <span>Downloading automatically...</span>
                         </div>
                     )}
