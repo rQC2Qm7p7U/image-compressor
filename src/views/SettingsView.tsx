@@ -36,7 +36,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
                         <button
                             key={p.id}
                             className="btn"
-                            onClick={() => updateSettings(p.settings as any)}
+                            onClick={() => updateSettings({ ...p.settings })}
                             title={`Apply ${p.name} settings: ${p.desc}`}
                             style={{
                                 flexDirection: 'column',
@@ -174,6 +174,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
                         <input
                             type="number"
                             value={settings.maxWidth}
+                            min="1"
+                            max="10000"
                             title="Maximum width in pixels"
                             onChange={(e) => updateSettings({ maxWidth: Number(e.target.value) })}
                             style={{

@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useAppStore, type Job } from '../store/useAppStore';
 import { Download, FolderInput, RefreshCw, ArrowDownAZ, ArrowUpNarrowWide, TestTube, Eye, Play, List } from 'lucide-react';
-import { createZipFromJobs, downloadBlob, saveToFolder, getExtensionFromMime } from '../lib/exportUtils';
+import { createZipFromJobs, downloadBlob, saveToFolder, buildOutputFilename } from '../lib/exportUtils';
 import { CompareModal } from '../components/CompareModal';
 import { compressImage } from '../lib/imageProcessor';
+import { useToast } from '../components/Toast';
 
 type SortMode = 'original' | 'name' | 'size-desc';
 
@@ -23,118 +24,109 @@ export const QueueView: React.FC = () => {
     const [compareJob, setCompareJob] = React.useState<string | null>(null);
     const [sortMode, setSortMode] = React.useState<SortMode>('original');
     const autoDownloadTriggered = React.useRef(false);
+    const { showToast } = useToast();
 
-    // Handlers
-    const handleDownloadZip = async () => {
+    // #4 — use shared buildOutputFilename utility
+    const handleDownloadZip = useCallback(async () => {
         const doneFiles = files.filter(f => f.status === 'done');
         if (doneFiles.length === 0) return;
 
         try {
             if (doneFiles.length === 1) {
-                // If only one file, download it directly without zipping
                 const job = doneFiles[0];
                 if (job.outputBlob) {
-                    let name = job.file.name;
-                    const ext = getExtensionFromMime(job.outputBlob.type);
-                    const nameParts = name.split('.');
-                    if (nameParts.length > 1) nameParts.pop();
-                    name = nameParts.join('.') + ext;
-
-                    downloadBlob(job.outputBlob, name);
+                    downloadBlob(job.outputBlob, buildOutputFilename(job.file.name, job.outputBlob.type));
                 }
             } else {
-                // Multiple files, zip them
                 const zipBlob = await createZipFromJobs(doneFiles);
                 downloadBlob(zipBlob, 'images.zip');
             }
 
-            // Auto-clear the queue after a short delay so the user sees completion
-            setTimeout(() => {
-                resetQueue();
-            }, 1500);
+            setTimeout(() => resetQueue(), 1500);
 
         } catch (e) {
-            alert('Failed to create ZIP or download file');
+            // #9 — toast instead of alert
+            showToast('Failed to create ZIP or download file', 'error');
             console.error(e);
         }
-    };
+    }, [files, resetQueue, showToast]);
 
-    // WORKER MANAGEMENT
+    // #2 — use Promise.allSettled instead of forEach(async)
+    // #5 — depend on derived values (status counts) instead of full files array
+    const doneCount = files.filter(f => f.status === 'done').length;
+    const waitingCount = files.filter(f => f.status === 'waiting').length;
+    const processingCount = files.filter(f => f.status === 'processing').length;
+
     useEffect(() => {
-        if (globalStatus === 'processing') {
-            autoDownloadTriggered.current = false; // Reset trigger on new processing
+        if (globalStatus !== 'processing') return;
 
-            // Find ALL waiting jobs to process them in parallel (WorkerPool will handle concurrency)
-            const pendingJobs = files.filter(f => f.status === 'waiting' || (f.status === 'error' && !f.error));
+        autoDownloadTriggered.current = false;
 
-            if (pendingJobs.length > 0) {
-                // Mark all as processing immediately using batch update
-                updateJobsBatch(pendingJobs.map(job => ({
-                    id: job.id,
-                    updates: { status: 'processing', error: undefined }
-                })));
+        const pendingJobs = files.filter(f => f.status === 'waiting' || (f.status === 'error' && !f.error));
 
-                // Start processing all of them
-                pendingJobs.forEach(async (job) => {
-                    try {
-                        const blob = await compressImage(job, settings);
-                        updateJob(job.id, {
-                            status: 'done',
-                            outputBlob: blob,
-                            compressedSize: blob.size
+        if (pendingJobs.length > 0) {
+            updateJobsBatch(pendingJobs.map(job => ({
+                id: job.id,
+                updates: { status: 'processing', error: undefined }
+            })));
+
+            // #2 — Promise.allSettled handles all rejections properly
+            Promise.allSettled(
+                pendingJobs.map(async (job) => {
+                    const blob = await compressImage(job, settings);
+                    updateJob(job.id, {
+                        status: 'done',
+                        outputBlob: blob,
+                        compressedSize: blob.size
+                    });
+                })
+            ).then(results => {
+                results.forEach((result, i) => {
+                    if (result.status === 'rejected') {
+                        const error = result.reason as Error;
+                        updateJob(pendingJobs[i].id, {
+                            status: 'error',
+                            error: error.message || 'Unknown error'
                         });
-                    } catch (error: any) {
-                        updateJob(job.id, { status: 'error', error: error.message || 'Unknown error' });
                     }
                 });
-            } else {
-                // Check if all are done (no processing, no waiting)
-                const isFinished = files.every(f => f.status === 'done' || f.status === 'error');
-                const hasProcessing = files.some(f => f.status === 'processing');
+            });
 
-                if (isFinished && !hasProcessing) {
-                    setGlobalStatus('done');
-                }
-            }
+        } else if (waitingCount === 0 && processingCount === 0) {
+            // #5 — use derived counts, not full files reference
+            setGlobalStatus('done');
         }
-    }, [files, globalStatus, settings, updateJob, updateJobsBatch, setGlobalStatus]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [globalStatus, waitingCount, processingCount]);
 
     // AUTO-DOWNLOAD
     useEffect(() => {
-        if (globalStatus === 'done' && files.length > 0 && !autoDownloadTriggered.current) {
-            // Check if there are actually any successfully processed files
-            const doneFiles = files.filter(f => f.status === 'done');
-            if (doneFiles.length > 0) {
-                autoDownloadTriggered.current = true;
-                handleDownloadZip();
-            }
+        if (globalStatus === 'done' && doneCount > 0 && !autoDownloadTriggered.current) {
+            autoDownloadTriggered.current = true;
+            handleDownloadZip();
         }
-    }, [globalStatus, files]);
+    }, [globalStatus, doneCount, handleDownloadZip]);
 
     const handleTestFirst = async () => {
-        // Find first waiting job
         const first = files.find(f => f.status === 'waiting');
         if (first) {
             updateJob(first.id, { status: 'processing' });
             try {
                 const blob = await compressImage(first, settings);
-                updateJob(first.id, {
-                    status: 'done',
-                    outputBlob: blob,
-                    compressedSize: blob.size
-                });
-            } catch (error: any) {
-                updateJob(first.id, { status: 'error', error: error.message || 'Unknown error' });
+                updateJob(first.id, { status: 'done', outputBlob: blob, compressedSize: blob.size });
+            } catch (error: unknown) {
+                const message = error instanceof Error ? error.message : 'Unknown error';
+                updateJob(first.id, { status: 'error', error: message });
             }
         }
     };
 
-    const handleStartProcessing = () => {
-        setGlobalStatus('processing');
-    };
+    const handleStartProcessing = () => setGlobalStatus('processing');
 
     const sortedFiles = React.useMemo(() => sortFiles(files, sortMode), [files, sortMode]);
-    const savings = React.useMemo(() => files.reduce((acc, f) => acc + (f.originalSize - (f.compressedSize || f.originalSize)), 0), [files]);
+    const savings = React.useMemo(() =>
+        files.reduce((acc, f) => acc + (f.originalSize - (f.compressedSize || f.originalSize)), 0),
+        [files]);
     const totalSize = React.useMemo(() => files.reduce((acc, f) => acc + f.originalSize, 0), [files]);
     const savedPercent = totalSize > 0 ? (savings / totalSize) * 100 : 0;
 
@@ -144,7 +136,7 @@ export const QueueView: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Processing Queue</h2>
-                    <p style={{ color: 'hsl(var(--color-text-dim))' }}>{files.filter(f => f.status === 'done').length} / {files.length} completed</p>
+                    <p style={{ color: 'hsl(var(--color-text-dim))' }}>{doneCount} / {files.length} completed</p>
                 </div>
 
                 {/* Sorting Controls */}
@@ -187,20 +179,16 @@ export const QueueView: React.FC = () => {
                     style={{
                         height: '100%',
                         background: 'hsl(var(--color-primary))',
-                        width: `${(files.filter(f => f.status === 'done').length / files.length) * 100}%`,
+                        width: `${(doneCount / files.length) * 100}%`,
                         transition: 'width 0.3s'
                     }}
                 />
             </div>
 
-            {/* Actions Bar (Start / Test) */}
-            {globalStatus === 'idle' && files.some(f => f.status === 'waiting') && (
+            {/* Actions Bar */}
+            {globalStatus === 'idle' && waitingCount > 0 && (
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button
-                        className="btn btn-primary"
-                        onClick={handleStartProcessing}
-                        title="Start processing all images in queue"
-                    >
+                    <button className="btn btn-primary" onClick={handleStartProcessing} title="Start processing all images in queue">
                         <Play size={18} fill="currentColor" /> Start Queue
                     </button>
                     <button
@@ -217,7 +205,9 @@ export const QueueView: React.FC = () => {
             {/* List */}
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {sortedFiles.map(job => {
-                    const itemSavings = job.compressedSize ? ((job.originalSize - job.compressedSize) / job.originalSize * 100).toFixed(1) : 0;
+                    const itemSavings = job.compressedSize
+                        ? ((job.originalSize - job.compressedSize) / job.originalSize * 100).toFixed(1)
+                        : 0;
                     return (
                         <div key={job.id} className="card" style={{
                             display: 'flex',
@@ -228,7 +218,7 @@ export const QueueView: React.FC = () => {
                                 job.status === 'done' ? '4px solid hsl(var(--color-success))' :
                                     '4px solid transparent'
                         }}>
-                            {/* Status Icon */}
+                            {/* Status dot */}
                             <div style={{
                                 width: '10px', height: '10px', borderRadius: '50%',
                                 background: job.status === 'done' ? 'hsl(var(--color-success))' :
@@ -253,11 +243,13 @@ export const QueueView: React.FC = () => {
                                             className="btn icon-btn"
                                             onClick={() => setCompareJob(job.id)}
                                             title="Compare with Original"
-                                            style={{ padding: '0.4rem', height: 'auto' }}
                                         >
                                             <Eye size={18} />
                                         </button>
                                     </>
+                                )}
+                                {job.status === 'error' && (
+                                    <span style={{ color: 'hsl(var(--color-error))', fontSize: '0.8rem' }}>{job.error}</span>
                                 )}
                             </div>
                             {job.status === 'processing' && <RefreshCw className="spin" size={20} />}
@@ -270,7 +262,7 @@ export const QueueView: React.FC = () => {
             <div style={{ display: 'flex', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid hsl(var(--color-border))' }}>
                 <button
                     className="btn btn-primary"
-                    disabled={files.filter(f => f.status === 'done').length === 0}
+                    disabled={doneCount === 0}
                     onClick={handleDownloadZip}
                     title="Download all compressed images as ZIP"
                 >
@@ -279,23 +271,21 @@ export const QueueView: React.FC = () => {
                 <button
                     className="btn"
                     style={{ flex: 1 }}
-                    disabled={files.filter(f => f.status === 'done').length === 0}
+                    disabled={doneCount === 0}
                     onClick={async () => {
                         try {
                             const doneFiles = files.filter(f => f.status === 'done');
-                            await saveToFolder(doneFiles);
-                            alert('Files saved successfully!');
-
-                            // Auto-clear the queue after a short delay
-                            setTimeout(() => {
-                                resetQueue();
-                            }, 1500);
-                        } catch (e: any) {
-                            if (e.message?.includes('not supported')) {
-                                alert('This feature is only available in Chrome/Edge on Desktop.');
+                            const count = await saveToFolder(doneFiles);
+                            // #9 — toast instead of alert
+                            showToast(`${count} file${count !== 1 ? 's' : ''} saved successfully!`, 'success');
+                            setTimeout(() => resetQueue(), 1500);
+                        } catch (e: unknown) {
+                            const msg = e instanceof Error ? e.message : '';
+                            if (msg.includes('not supported')) {
+                                showToast('Save to Folder is only available in Chrome/Edge on Desktop.', 'error');
                             } else {
                                 console.error(e);
-                                alert('Failed to save to folder. Try ZIP download instead.');
+                                showToast('Failed to save to folder. Try ZIP download instead.', 'error');
                             }
                         }
                     }}
@@ -316,11 +306,3 @@ export const QueueView: React.FC = () => {
         </div>
     );
 };
-
-// Add simple spin animation to global css or inline here
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes spin { 100% { transform: rotate(360deg); } }
-  .spin { animation: spin 1s linear infinite; }
-`;
-document.head.appendChild(style);

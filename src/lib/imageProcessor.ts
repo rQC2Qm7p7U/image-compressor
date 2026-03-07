@@ -1,7 +1,9 @@
 import type { Job, Settings } from '../store/useAppStore';
 import heic2any from 'heic2any';
 
-const MAX_CONCURRENCY = navigator.hardwareConcurrency ? Math.min(4, navigator.hardwareConcurrency - 1) : 2;
+const MAX_CONCURRENCY = navigator.hardwareConcurrency
+    ? Math.min(4, navigator.hardwareConcurrency - 1)
+    : 2;
 
 class WorkerPool {
     private workers: Worker[] = [];
@@ -10,13 +12,16 @@ class WorkerPool {
 
     constructor(size: number) {
         for (let i = 0; i < size; i++) {
-            const worker = new Worker(new URL('../workers/processor.worker.ts', import.meta.url), { type: 'module' });
+            const worker = new Worker(
+                new URL('../workers/processor.worker.ts', import.meta.url),
+                { type: 'module' }
+            );
             this.workers.push(worker);
             this.idleWorkers.push(worker);
         }
     }
 
-    run(task: (worker: Worker) => Promise<any>): Promise<any> {
+    run(task: (worker: Worker) => Promise<unknown>): Promise<unknown> {
         return new Promise((resolve, reject) => {
             const execute = async (worker: Worker) => {
                 try {
@@ -46,6 +51,14 @@ class WorkerPool {
             execute(worker);
         }
     }
+
+    // #8 — terminate all workers (cleanup on app unmount or test teardown)
+    terminate() {
+        this.queue.length = 0;
+        this.workers.forEach(w => w.terminate());
+        this.workers = [];
+        this.idleWorkers = [];
+    }
 }
 
 // Singleton instance
@@ -55,8 +68,11 @@ export const compressImage = async (job: Job, settings: Settings): Promise<Blob>
     let fileToProcess: File | Blob = job.file;
 
     // Pre-convert HEIC/HEIF on the main thread since heic2any requires DOM canvas
-    const isHeic = job.file.type === 'image/heic' || job.file.type === 'image/heif' ||
-        job.file.name.toLowerCase().endsWith('.heic') || job.file.name.toLowerCase().endsWith('.heif');
+    const isHeic =
+        job.file.type === 'image/heic' ||
+        job.file.type === 'image/heif' ||
+        job.file.name.toLowerCase().endsWith('.heic') ||
+        job.file.name.toLowerCase().endsWith('.heif');
 
     if (isHeic) {
         try {
@@ -69,28 +85,25 @@ export const compressImage = async (job: Job, settings: Settings): Promise<Blob>
     }
 
     return imageEngine.run((worker) => {
-        return new Promise((resolve, reject) => {
+        return new Promise<Blob>((resolve, reject) => {
             const handler = (e: MessageEvent) => {
                 const { id, status, blob, error } = e.data;
                 if (id !== job.id) return;
 
                 worker.removeEventListener('message', handler);
                 if (status === 'done') {
-                    // Re-apply the Blob type just in case postMessage stripped it
-                    const fallbackType = settings.format === 'jpeg' ? 'image/jpeg' :
-                        settings.format === 'avif' ? 'image/avif' : 'image/webp';
+                    const fallbackType =
+                        settings.format === 'jpeg' ? 'image/jpeg' :
+                            settings.format === 'avif' ? 'image/avif' : 'image/webp';
                     const typedBlob = new Blob([blob], { type: blob.type || fallbackType });
                     resolve(typedBlob);
+                } else {
+                    reject(new Error(error));
                 }
-                else reject(new Error(error));
             };
 
             worker.addEventListener('message', handler);
-            worker.postMessage({
-                id: job.id,
-                file: fileToProcess,
-                settings
-            });
+            worker.postMessage({ id: job.id, file: fileToProcess, settings });
         });
-    });
+    }) as Promise<Blob>;
 };

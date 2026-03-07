@@ -12,9 +12,9 @@ if (!token) {
 }
 
 const data = JSON.stringify({
-    tag_name: 'v1.1.4',
-    name: 'Release v1.1.4',
-    body: '## Security\n- Removed hardcoded `GITHUB_TOKEN` from `.env` file\n- `create-release.js` now reads token from `RELEASE_TOKEN` environment variable instead of reading from file\n- Added `netlify.toml` with production security headers (COOP, COEP, CSP, X-Frame-Options, X-Content-Type-Options)\n- Removed `@ts-ignore` in `processor.worker.ts`\n- Removed `as any` cast in `exportUtils.ts`, replaced with proper `wicg-file-system-access` types',
+    tag_name: 'v1.1.5',
+    name: 'Release v1.1.5',
+    body: '## Improvements\n- Replace `forEach(async)` with `Promise.allSettled` for robust parallel processing\n- Extract `buildOutputFilename()` utility, eliminating 3x code duplication\n- Add `WorkerPool.terminate()` method for proper memory cleanup\n- Move `.spin` CSS animation from DOM injection into `index.css`\n- Add Toast notification system replacing all `alert()` calls\n- Fix `useEffect` dependencies to use derived counters instead of full `files` array\n- Add `min`/`max` constraints to maxWidth input\n- Remove `console.log` from Service Worker callbacks\n- Remove `as any` casts, improve TypeScript strictness',
     draft: false,
     prerelease: false,
     generate_release_notes: true

@@ -3,6 +3,14 @@ import { zipSync } from 'fflate';
 import type { Zippable } from 'fflate';
 import type { Job } from '../store/useAppStore';
 
+// #4 — single source of truth for output filename logic
+export const buildOutputFilename = (originalName: string, mimeType: string): string => {
+    const ext = getExtensionFromMime(mimeType);
+    const parts = originalName.split('.');
+    if (parts.length > 1) parts.pop();
+    return parts.join('.') + ext;
+};
+
 export const getExtensionFromMime = (mimeType: string): string => {
     if (mimeType.includes('webp')) return '.webp';
     if (mimeType.includes('avif')) return '.avif';
@@ -15,23 +23,9 @@ export const createZipFromJobs = async (files: Job[]): Promise<Blob> => {
 
     for (const job of files) {
         if (job.status === 'done' && job.outputBlob) {
-            // Convert Blob to Uint8Array for fflate (synchronous zipSync is easiest for small batches)
-            // For large batches, async zip with worker is better, but fflate is fast.
-            // Let's use async reading of blob.
-
             const buffer = await job.outputBlob.arrayBuffer();
             const uint8 = new Uint8Array(buffer);
-
-            // Determine filename extension
-            let name = job.file.name;
-            const ext = getExtensionFromMime(job.outputBlob.type);
-
-            // Replace old extension or append?
-            // "image.png" -> "image.webp"
-            const nameParts = name.split('.');
-            if (nameParts.length > 1) nameParts.pop();
-            name = nameParts.join('.') + ext;
-
+            const name = buildOutputFilename(job.file.name, job.outputBlob.type);
             data[name] = uint8;
         }
     }
@@ -50,12 +44,7 @@ export const saveToFolder = async (files: Job[]) => {
     let savedCount = 0;
     for (const job of files) {
         if (job.status === 'done' && job.outputBlob) {
-            let name = job.file.name;
-            const ext = getExtensionFromMime(job.outputBlob.type);
-            const nameParts = name.split('.');
-            if (nameParts.length > 1) nameParts.pop();
-            name = nameParts.join('.') + ext;
-
+            const name = buildOutputFilename(job.file.name, job.outputBlob.type);
             const fileHandle = await dirHandle.getFileHandle(name, { create: true });
             const writable = await fileHandle.createWritable();
             await writable.write(job.outputBlob);

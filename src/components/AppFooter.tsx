@@ -9,11 +9,11 @@ export const AppFooter: React.FC = () => {
         needRefresh: [needRefresh],
         updateServiceWorker,
     } = useRegisterSW({
-        onRegistered(r: ServiceWorkerRegistration | undefined) {
-            console.log('SW Registered: ', r);
+        onRegistered(_r: ServiceWorkerRegistration | undefined) {
+            // SW registered — no logging needed in production
         },
-        onRegisterError(error: any) {
-            console.log('SW registration error', error);
+        onRegisterError(error: unknown) {
+            console.error('SW registration error', error);
         },
     });
 
@@ -56,7 +56,7 @@ export const AppFooter: React.FC = () => {
                         onMouseOver={(e) => (e.currentTarget.style.opacity = '0.9')}
                         onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
                     >
-                        Update Available 🚀
+                        Update Available
                     </button>
                 )}
             </div>
