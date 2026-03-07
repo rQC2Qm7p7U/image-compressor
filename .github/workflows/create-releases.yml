@@ -1,7 +1,7 @@
 name: Create Missing Releases
 
 on:
-  workflow_dispatch: # Manual trigger only
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -12,101 +12,79 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Need full history for commit refs
+          fetch-depth: 0
 
-      - name: Create v1.1.4
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v1.1.4
-          target_commitish: 2c3117e
-          name: "Release v1.1.4 — Security Hardening"
-          body: |
-            ## Security & Infrastructure
-            - Remove hardcoded GitHub token from `.env` — now uses `RELEASE_TOKEN` env variable
-            - Add production security headers to `netlify.toml` (CSP, COEP, COOP, X-Frame-Options)
-            - Fix TypeScript errors with `wicg-file-system-access` types
-            - Add write permissions to `GITHUB_TOKEN` for `gh-pages` deploy
+      - name: Create all missing releases
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
 
-      - name: Create v1.1.5
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v1.1.5
-          target_commitish: 9c42e06
-          name: "Release v1.1.5 — Code Quality"
-          body: |
-            ## Code Quality Improvements
-            - Replace `forEach(async)` with `Promise.allSettled` for robust parallel processing
-            - Extract `buildOutputFilename()` utility, eliminating 3× code duplication
-            - Add `WorkerPool.terminate()` method for proper memory cleanup
-            - Move `.spin` CSS animation from DOM injection into `index.css`
-            - Add Toast notification system replacing all `alert()` calls
-            - Fix `useEffect` dependencies to use derived counters instead of full `files` array
-            - Add `min`/`max` constraints to maxWidth input
-            - Remove `console.log` from Service Worker callbacks
-            - Remove `as any` casts, improve TypeScript strictness
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Creating v1.1.4..."
+          gh release create v1.1.4 \
+            --target 2c3117e \
+            --title "Release v1.1.4 — Security Hardening" \
+            --notes "## Security & Infrastructure
+          - Remove hardcoded GitHub token from \`.env\` — now uses \`RELEASE_TOKEN\` env variable
+          - Add production security headers to \`netlify.toml\` (CSP, COEP, COOP, X-Frame-Options)
+          - Fix TypeScript errors with \`wicg-file-system-access\` types
+          - Add write permissions to \`GITHUB_TOKEN\` for \`gh-pages\` deploy"
 
-      - name: Create v1.2.0
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v1.2.0
-          target_commitish: 015b06c
-          name: "Release v1.2.0 — UX Simplification"
-          body: |
-            ## Major UX Simplification
-            - **Remove Queue tab entirely** for a streamlined two-tab experience (Compress + Settings)
-            - Integrate compression logic directly into the Import view
-            - Add inline progress bar that automatically starts when images are dropped
-            - Automate ZIP generation and download immediately upon completion
-            - Remove `CompareModal` component (105 lines)
-            - Clean up `useAppStore` — removed `globalStatus`, `updateJobsBatch` and other unused actions
+          echo "Creating v1.1.5..."
+          gh release create v1.1.5 \
+            --target 9c42e06 \
+            --title "Release v1.1.5 — Code Quality" \
+            --notes "## Code Quality Improvements
+          - Replace \`forEach(async)\` with \`Promise.allSettled\` for robust parallel processing
+          - Extract \`buildOutputFilename()\` utility, eliminating 3x code duplication
+          - Add \`WorkerPool.terminate()\` method for proper memory cleanup
+          - Move \`.spin\` CSS animation from DOM injection into \`index.css\`
+          - Add Toast notification system replacing all \`alert()\` calls
+          - Fix \`useEffect\` dependencies to use derived counters
+          - Add min/max constraints to maxWidth input
+          - Remove \`console.log\` from Service Worker callbacks
+          - Remove \`as any\` casts, improve TypeScript strictness"
 
-            > **−784 lines of code** removed in this release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Creating v1.2.0..."
+          gh release create v1.2.0 \
+            --target 015b06c \
+            --title "Release v1.2.0 — UX Simplification" \
+            --notes "## Major UX Simplification
+          - **Remove Queue tab entirely** for a streamlined two-tab experience (Compress + Settings)
+          - Integrate compression logic directly into the Import view
+          - Add inline progress bar that automatically starts when images are dropped
+          - Automate ZIP generation and download immediately upon completion
+          - Remove CompareModal component (105 lines)
+          - Clean up useAppStore — removed globalStatus, updateJobsBatch and other unused actions
 
-      - name: Create v1.2.1
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v1.2.1
-          target_commitish: 21fbb87
-          name: "Release v1.2.1 — Bug Fixes"
-          body: |
-            ## Bug Fixes
-            - Fix stray `$` symbol displayed as text in savings message
-            - Fix stale settings closure — compression now always uses current settings via `useRef`
-            - Fix fractional pixel dimensions in resize via `Math.round()`
-            - Remove dead `saveToFolder` code after Queue tab removal
-            - Replace `error: any` with `error: unknown` in worker for TypeScript strictness
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          > **-784 lines of code** removed in this release"
 
-      - name: Create v1.2.2
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v1.2.2
-          target_commitish: f475a7c
-          name: "Release v1.2.2 — Cleaner Settings UI"
-          body: |
-            ## UI Cleanup
-            - Remove Webmaster Presets section from Settings for a cleaner, less cluttered interface
-            - Settings now focuses on three core controls: Output Format, Quality, and Resize
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Creating v1.2.1..."
+          gh release create v1.2.1 \
+            --target 21fbb87 \
+            --title "Release v1.2.1 — Bug Fixes" \
+            --notes "## Bug Fixes
+          - Fix stray dollar sign displayed as text in savings message
+          - Fix stale settings closure — compression now always uses current settings via useRef
+          - Fix fractional pixel dimensions in resize via Math.round()
+          - Remove dead saveToFolder code after Queue tab removal
+          - Replace error: any with error: unknown in worker for TypeScript strictness"
 
-      - name: Create v1.2.3
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v1.2.3
-          target_commitish: 4729815
-          name: "Release v1.2.3 — Critical Bug Fixes"
-          body: |
-            ## Critical Bug Fixes
-            - **Fix race condition**: replace N sequential `updateJob()` calls with a single batch `setState()` — previously only the last file got marked as "processing"
-            - **Fix AVIF quality**: pass `quality` setting to AVIF encoder (was silently using codec defaults)
-            - Remove dead `removeFile` action and unused `previewUrl` field from store
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Creating v1.2.2..."
+          gh release create v1.2.2 \
+            --target f475a7c \
+            --title "Release v1.2.2 — Cleaner Settings UI" \
+            --notes "## UI Cleanup
+          - Remove Webmaster Presets section from Settings for a cleaner interface
+          - Settings now focuses on three core controls: Output Format, Quality, and Resize"
+
+          echo "Creating v1.2.3..."
+          gh release create v1.2.3 \
+            --target 4729815 \
+            --title "Release v1.2.3 — Critical Bug Fixes" \
+            --notes "## Critical Bug Fixes
+          - **Fix race condition**: replace N sequential updateJob() calls with a single batch setState()
+          - **Fix AVIF quality**: pass quality setting to AVIF encoder (was silently using defaults)
+          - Remove dead removeFile action and unused previewUrl field from store"
+
+          echo "All releases created successfully!"
