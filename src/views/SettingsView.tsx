@@ -6,7 +6,7 @@ interface SettingsViewProps {
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
-    const { settings, updateSettings, files, setGlobalStatus } = useAppStore();
+    const { settings, updateSettings, files } = useAppStore();
 
     const presets = [
         { id: 'web-modern', name: 'Web Modern', desc: 'Rec. for Banners', settings: { format: 'webp', quality: 80, resize: true, maxWidth: 1920 } },
@@ -17,7 +17,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
     ] as const;
 
     const handleStart = () => {
-        setGlobalStatus('processing');
         onNext();
     };
 
@@ -194,10 +193,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
             <button
                 className="btn btn-primary"
                 onClick={handleStart}
-                title="Save settings and go to queue"
+                title="Save settings and return to Compress tab"
                 style={{ padding: '1rem', fontSize: '1.1rem' }}
             >
-                {files.length === 0 ? 'Save Settings & Go to Queue' : `Start Conversion (${files.length} images)`}
+                {files.length === 0 ? 'Save Settings & Go to Compress' : `Start Compression (${files.length} images)`}
             </button>
         </div>
     );
