@@ -20,8 +20,8 @@ export const ImportView: React.FC = () => {
     const settingsRef = useRef(settings);
     settingsRef.current = settings; // always fresh reference
 
-    // Track which batches we've already started processing to prevent race conditions
-    const processedBatchRef = useRef(0);
+    // Count waiting jobs — used as the effect trigger
+    const waitingCount = useMemo(() => files.filter(f => f.status === 'waiting').length, [files]);
 
     // Derived counts — cached with useMemo to avoid O(n) on every render
     const { totalFiles, doneCount, errorCount, savedSavings, totalSize } = useMemo(() => {
@@ -53,16 +53,15 @@ export const ImportView: React.FC = () => {
         }
     }, [addFiles]);
 
-    // Auto processing logic — uses a batch counter to prevent duplicate processing
+    // Auto processing — triggers whenever new 'waiting' jobs appear
+    // Uses waitingCount as dependency instead of fragile batch-ref (StrictMode-safe)
     useEffect(() => {
-        const currentBatch = files.length;
-        // Skip if we already processed this batch size (prevents StrictMode / rapid-add races)
-        if (currentBatch === 0 || currentBatch === processedBatchRef.current) return;
+        if (waitingCount === 0) return;
 
-        const pendingJobs = files.filter(f => f.status === 'waiting' || (f.status === 'error' && !f.error));
+        // Read latest state directly to avoid stale closures
+        const currentFiles = useAppStore.getState().files;
+        const pendingJobs = currentFiles.filter(f => f.status === 'waiting');
         if (pendingJobs.length === 0) return;
-
-        processedBatchRef.current = currentBatch;
 
         // Mark all pending as processing in ONE batch
         const pendingIds = new Set(pendingJobs.map(j => j.id));
@@ -105,8 +104,7 @@ export const ImportView: React.FC = () => {
                 }));
             }
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [files.length]); // Intentionally only depend on array length to avoid loops
+    }, [waitingCount, updateJob]);
 
     const handleDownloadZip = useCallback(async () => {
         const doneFiles = files.filter(f => f.status === 'done');
