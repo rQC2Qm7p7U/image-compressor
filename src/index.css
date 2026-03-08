@@ -359,7 +359,14 @@ input[type="range"] {
   font-size: 0.9rem;
 }
 
+.progress-bar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .progress-bar {
+  flex: 1;
   background: hsl(var(--color-bg-hover));
   height: 8px;
   border-radius: 4px;
@@ -370,10 +377,111 @@ input[type="range"] {
   height: 100%;
   background: hsl(var(--color-primary));
   transition: width 0.3s ease, background 0.3s ease;
+  position: relative;
 }
 
 .progress-bar__fill.done {
   background: hsl(var(--color-success));
+}
+
+/* Shimmer animation during processing */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.progress-bar__fill.shimmer {
+  background: linear-gradient(90deg,
+      hsl(var(--color-primary)) 25%,
+      hsl(var(--color-primary-hover)) 50%,
+      hsl(var(--color-primary)) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.progress-percent {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: hsl(var(--color-primary));
+  min-width: 3ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Per-file status list */
+.progress-files {
+  max-height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--color-border)) transparent;
+}
+
+.progress-file {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  transition: background 0.15s;
+}
+
+.progress-file:hover {
+  background: hsl(var(--color-bg-hover));
+}
+
+.progress-file__icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  color: hsl(var(--color-text-dim));
+}
+
+.progress-file--done .progress-file__icon {
+  color: hsl(var(--color-success));
+}
+
+.progress-file--error .progress-file__icon {
+  color: hsl(var(--color-error));
+}
+
+.progress-file--processing .progress-file__icon {
+  color: hsl(var(--color-primary));
+  animation: spin 1s linear infinite;
+}
+
+.progress-file__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: hsl(var(--color-text));
+}
+
+.progress-file__size {
+  flex-shrink: 0;
+  color: hsl(var(--color-text-dim));
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-file--done .progress-file__size {
+  color: hsl(var(--color-success));
+}
+
+.progress-file__error {
+  flex-shrink: 0;
+  color: hsl(var(--color-error));
+  font-weight: 600;
+  font-size: 0.75rem;
 }
 
 .progress-stats {

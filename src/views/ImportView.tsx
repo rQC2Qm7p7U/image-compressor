@@ -1,9 +1,15 @@
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { Upload, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Upload, RefreshCw, CheckCircle2, AlertCircle, FileImage } from 'lucide-react';
 import { compressImage } from '../lib/imageProcessor';
 import { createZipFromJobs, downloadBlob, buildOutputFilename } from '../lib/exportUtils';
 import { useToast } from '../components/Toast';
+
+function formatBytes(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
 
 export const ImportView: React.FC = () => {
     const { files, addFiles, updateJob, settings, clearAll } = useAppStore();
@@ -31,6 +37,7 @@ export const ImportView: React.FC = () => {
 
     const isProcessing = totalFiles > 0 && doneCount + errorCount < totalFiles;
     const isFinished = totalFiles > 0 && doneCount + errorCount === totalFiles;
+    const progressPercent = totalFiles > 0 ? Math.round(((doneCount + errorCount) / totalFiles) * 100) : 0;
 
     const handleFiles = useCallback((fileList: FileList | null) => {
         if (!fileList) return;
@@ -184,9 +191,10 @@ export const ImportView: React.FC = () => {
                 />
             </div>
 
-            {/* Progress Bar Area */}
+            {/* Progress Area */}
             {totalFiles > 0 && (
                 <div className="card progress-card">
+                    {/* Header */}
                     <div className="progress-header">
                         <div className="progress-label">
                             {isProcessing
@@ -202,18 +210,46 @@ export const ImportView: React.FC = () => {
                         </span>
                     </div>
 
-                    {/* Bar */}
-                    <div className="progress-bar">
-                        <div
-                            className={`progress-bar__fill${isFinished ? ' done' : ''}`}
-                            style={{ width: `${((doneCount + errorCount) / totalFiles) * 100}%` }}
-                        />
+                    {/* Bar with percentage */}
+                    <div className="progress-bar-wrapper">
+                        <div className="progress-bar">
+                            <div
+                                className={`progress-bar__fill${isFinished ? ' done' : ''}${isProcessing ? ' shimmer' : ''}`}
+                                style={{ width: `${progressPercent}%` }}
+                            />
+                        </div>
+                        <span className="progress-percent">{progressPercent}%</span>
+                    </div>
+
+                    {/* Per-file list */}
+                    <div className="progress-files">
+                        {files.map(f => (
+                            <div key={f.id} className={`progress-file progress-file--${f.status}`}>
+                                <div className="progress-file__icon">
+                                    {f.status === 'done' && <CheckCircle2 size={14} />}
+                                    {f.status === 'error' && <AlertCircle size={14} />}
+                                    {(f.status === 'processing' || f.status === 'waiting') && <FileImage size={14} />}
+                                </div>
+                                <span className="progress-file__name" title={f.file.name}>
+                                    {f.file.name}
+                                </span>
+                                <span className="progress-file__size">
+                                    {formatBytes(f.originalSize)}
+                                    {f.status === 'done' && f.compressedSize != null && (
+                                        <> → {formatBytes(f.compressedSize)}</>
+                                    )}
+                                </span>
+                                {f.status === 'error' && f.error && (
+                                    <span className="progress-file__error" title={f.error}>Error</span>
+                                )}
+                            </div>
+                        ))}
                     </div>
 
                     {/* Stats when done */}
                     {isFinished && (
                         <div className="progress-stats">
-                            <span>Saved {(savedSavings / 1024 / 1024).toFixed(1)} MB</span>
+                            <span>Saved {(savedSavings / 1024 / 1024).toFixed(1)} MB ({totalSize > 0 ? ((savedSavings / totalSize) * 100).toFixed(1) : 0}%)</span>
                             <span>Downloading automatically...</span>
                         </div>
                     )}
