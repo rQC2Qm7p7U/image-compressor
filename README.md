@@ -85,4 +85,4 @@ src/
 
 ## 📄 Лицензия
 
-MIT — [LeoWorks](https://kwork.ru/user/leoworks)
+MIT — [LeoWorks](https://www.linkedin.com/in/leoshw/)
