@@ -18,6 +18,8 @@
 | v1.2.2 | Удаление пресетов для чистого UI |
 | v1.2.3 | Фикс: race condition в батче, качество AVIF |
 | v1.2.4 | Рефакторинг: CSS-классы вместо inline, дедупликация, useMemo, Worker HMR, ZIP-коллизии |
+| v1.3.0 | UI: Shimmer-анимации, прогресс-бар, нативный UI для JPEG/WebP |
+| v1.3.1 | Security & UX: Фикс React ref concurrent rendering, защита Worker от NaN, удаление утечек username + старых скриптов |
 
 ---
 

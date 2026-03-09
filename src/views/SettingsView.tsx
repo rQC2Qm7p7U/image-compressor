@@ -5,6 +5,9 @@ interface SettingsViewProps {
     onNext: () => void;
 }
 
+/** Maximum allowed value for the resize width input (px) */
+const MAX_WIDTH_LIMIT = 10000;
+
 const FORMATS = [
     { value: 'jpeg', label: 'JPEG', tip: 'Convert images to JPEG format' },
     { value: 'webp', label: 'WebP', tip: 'Convert images to WebP format (Default)' },
@@ -85,9 +88,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
                             type="number"
                             value={settings.maxWidth}
                             min="1"
-                            max="10000"
+                            max={MAX_WIDTH_LIMIT}
                             title="Maximum width in pixels"
-                            onChange={(e) => updateSettings({ maxWidth: Number(e.target.value) })}
+                            onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                updateSettings({ maxWidth: isNaN(val) || val < 1 ? 1 : val });
+                            }}
                             className="resize-input"
                         />
                     </div>

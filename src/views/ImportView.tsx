@@ -3,7 +3,11 @@ import { useAppStore } from '../store/useAppStore';
 import { Upload, RefreshCw, CheckCircle2, AlertCircle, FileImage } from 'lucide-react';
 import { compressImage } from '../lib/imageProcessor';
 import { createZipFromJobs, downloadBlob, buildOutputFilename } from '../lib/exportUtils';
-import { useToast } from '../components/Toast';
+import { useToast } from '../components/ToastContext';
+
+const ZIP_FILENAME = 'images.zip';
+/** Delay before clearing the file list after auto-download (ms) */
+const CLEAR_DELAY_MS = 2500;
 
 function formatBytes(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
@@ -18,7 +22,9 @@ export const ImportView: React.FC = () => {
     const { showToast } = useToast();
     const autoDownloadTriggered = useRef(false);
     const settingsRef = useRef(settings);
-    settingsRef.current = settings; // always fresh reference
+    React.useLayoutEffect(() => {
+        settingsRef.current = settings;
+    }, [settings]);
 
     // Count waiting jobs — used as the effect trigger
     const waitingCount = useMemo(() => files.filter(f => f.status === 'waiting').length, [files]);
@@ -118,15 +124,20 @@ export const ImportView: React.FC = () => {
                 }
             } else {
                 const zipBlob = await createZipFromJobs(doneFiles);
-                downloadBlob(zipBlob, 'images.zip');
+                downloadBlob(zipBlob, ZIP_FILENAME);
             }
 
             // Cleanup after short delay
-            setTimeout(() => clearAll(), 2500);
+            setTimeout(() => clearAll(), CLEAR_DELAY_MS);
 
             let msg = `${doneFiles.length} file${doneFiles.length > 1 ? 's' : ''} compressed! `;
             if (totalSize > 0) {
-                msg += `Saved ${(savedSavings / 1024 / 1024).toFixed(1)} MB (${((savedSavings / totalSize) * 100).toFixed(1)}%).`;
+                if (savedSavings >= 0) {
+                    msg += `Saved ${(savedSavings / 1024 / 1024).toFixed(1)} MB (${((savedSavings / totalSize) * 100).toFixed(1)}%).`;
+                } else {
+                    const increased = Math.abs(savedSavings);
+                    msg += `Increased by ${(increased / 1024 / 1024).toFixed(1)} MB (quality too high).`;
+                }
             }
             showToast(msg, 'success');
 
@@ -247,7 +258,11 @@ export const ImportView: React.FC = () => {
                     {/* Stats when done */}
                     {isFinished && (
                         <div className="progress-stats">
-                            <span>Saved {(savedSavings / 1024 / 1024).toFixed(1)} MB ({totalSize > 0 ? ((savedSavings / totalSize) * 100).toFixed(1) : 0}%)</span>
+                            {savedSavings >= 0 ? (
+                                <span>Saved {(savedSavings / 1024 / 1024).toFixed(1)} MB ({totalSize > 0 ? ((savedSavings / totalSize) * 100).toFixed(1) : 0}%)</span>
+                            ) : (
+                                <span>Increased by {(Math.abs(savedSavings) / 1024 / 1024).toFixed(1)} MB</span>
+                            )}
                             <span>Downloading automatically...</span>
                         </div>
                     )}

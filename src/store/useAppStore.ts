@@ -20,6 +20,10 @@ export interface Settings {
     maxWidth: number;
 }
 
+const DEFAULT_FORMAT: Settings['format'] = 'webp';
+const DEFAULT_QUALITY = 80;
+const DEFAULT_MAX_WIDTH = 1920;
+
 interface AppState {
     files: Job[];
     settings: Settings;
@@ -35,10 +39,10 @@ export const useAppStore = create<AppState>()(
         (set) => ({
             files: [],
             settings: {
-                format: 'webp', // Changed default to webp as it was standard
-                quality: 80,
+                format: DEFAULT_FORMAT,
+                quality: DEFAULT_QUALITY,
                 resize: false,
-                maxWidth: 1920,
+                maxWidth: DEFAULT_MAX_WIDTH,
             },
 
             addFiles: (newFiles) => set((state) => {

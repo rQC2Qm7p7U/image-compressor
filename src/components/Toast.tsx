@@ -1,18 +1,8 @@
 import React, { useState, useCallback } from 'react';
+import { ToastContext, type Toast, type ToastType } from './ToastContext';
 
-export type ToastType = 'success' | 'error' | 'info';
-
-interface Toast {
-    id: number;
-    message: string;
-    type: ToastType;
-}
-
-interface ToastContextValue {
-    showToast: (message: string, type?: ToastType) => void;
-}
-
-export const ToastContext = React.createContext<ToastContextValue>({ showToast: () => { } });
+/** How long a toast notification stays visible before auto-dismissing */
+const TOAST_DURATION_MS = 3500;
 
 let nextId = 0;
 
@@ -24,7 +14,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setToasts(prev => [...prev, { id, message, type }]);
         setTimeout(() => {
             setToasts(prev => prev.filter(t => t.id !== id));
-        }, 3500);
+        }, TOAST_DURATION_MS);
     }, []);
 
     return (
@@ -42,5 +32,3 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         </ToastContext.Provider>
     );
 };
-
-export const useToast = () => React.useContext(ToastContext);

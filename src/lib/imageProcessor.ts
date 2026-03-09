@@ -1,9 +1,13 @@
 import type { Job, Settings } from '../store/useAppStore';
 import heic2any from 'heic2any';
 
+/** Prevent spawning too many workers even on high-core machines */
+const MAX_CONCURRENCY_CAP = 4;
+const FALLBACK_CONCURRENCY = 2;
+
 const MAX_CONCURRENCY = navigator.hardwareConcurrency
-    ? Math.min(4, navigator.hardwareConcurrency - 1)
-    : 2;
+    ? Math.min(MAX_CONCURRENCY_CAP, navigator.hardwareConcurrency - 1)
+    : FALLBACK_CONCURRENCY;
 
 class WorkerPool {
     private workers: Worker[] = [];

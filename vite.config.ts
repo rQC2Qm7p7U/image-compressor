@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import packageJson from './package.json'
 
+/** 5 MiB — raised to allow caching the AVIF WASM encoder in the Service Worker */
+const WORKBOX_MAX_FILE_SIZE = 5 * 1024 * 1024
+
 // https://vite.dev/config/
 export default defineConfig({
   base: '/',
@@ -15,7 +18,7 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       workbox: {
-        maximumFileSizeToCacheInBytes: 5242880 // 5 MiB to allow the AVIF WASM encoder
+        maximumFileSizeToCacheInBytes: WORKBOX_MAX_FILE_SIZE
       },
       manifest: {
         name: 'Image Compressor Pro',

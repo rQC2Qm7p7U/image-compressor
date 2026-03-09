@@ -54,8 +54,11 @@ self.onmessage = async (e: MessageEvent) => {
 
 function calculateSize(srcWidth: number, srcHeight: number, shouldResize: boolean, maxWidth: number) {
     if (!shouldResize || srcWidth <= maxWidth) {
-        return { width: srcWidth, height: srcHeight };
+        return { width: Math.max(1, srcWidth), height: Math.max(1, srcHeight) };
     }
     const ratio = maxWidth / srcWidth;
-    return { width: maxWidth, height: Math.round(srcHeight * ratio) };
+    return {
+        width: Math.max(1, maxWidth),
+        height: Math.max(1, Math.round(srcHeight * ratio))
+    };
 }
