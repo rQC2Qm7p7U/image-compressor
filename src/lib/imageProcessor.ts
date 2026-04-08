@@ -76,24 +76,30 @@ if (import.meta.hot) {
 export const compressImage = async (job: Job, settings: Settings): Promise<Blob> => {
     let fileToProcess: File | Blob = job.file;
 
-    // Pre-convert HEIC/HEIF on the main thread since heic2any requires DOM canvas
     const isHeic =
         job.file.type === 'image/heic' ||
         job.file.type === 'image/heif' ||
         job.file.name.toLowerCase().endsWith('.heic') ||
         job.file.name.toLowerCase().endsWith('.heif');
 
-    if (isHeic) {
-        try {
-            const converted = await heic2any({ blob: job.file, toType: 'image/jpeg' });
-            fileToProcess = Array.isArray(converted) ? converted[0] : converted;
-        } catch (err) {
-            console.error('Failed to convert HEIC to JPEG', err);
-            throw new Error('Failed to parse HEIC file');
+    return imageEngine.run(async (worker) => {
+        if (isHeic) {
+            try {
+                // Wrapper timeout to prevent WASM/libheif silent crash deadlocks
+                const timeoutError = new Error('HEIC conversion timed out (file may be too large or corrupted)');
+                const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(timeoutError), 30000));
+                
+                const converted = await Promise.race([
+                    heic2any({ blob: job.file, toType: 'image/jpeg' }),
+                    timeoutPromise
+                ]);
+                fileToProcess = Array.isArray(converted) ? converted[0] : converted;
+            } catch (err) {
+                console.error('Failed to convert HEIC to JPEG', err);
+                throw new Error(err instanceof Error ? err.message : 'Failed to parse HEIC file');
+            }
         }
-    }
 
-    return imageEngine.run((worker) => {
         return new Promise<Blob>((resolve, reject) => {
             const handler = (e: MessageEvent) => {
                 const { id, status, blob, error } = e.data;
