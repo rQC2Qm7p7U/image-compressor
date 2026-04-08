@@ -1,88 +1,91 @@
-# Image Compressor Pro (PWA)
+<div align="center">
+  <h1>Image Compressor Pro (PWA)</h1>
+  <p>
+    <a href="https://image-compressor-leoworks.netlify.app"><img src="https://img.shields.io/badge/Netlify-Deployed-00C7B7?style=flat-square&logo=netlify" alt="Deployed on Netlify" /></a>
+    <a href="https://react.dev"><img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react" alt="React 19" /></a>
+    <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript" alt="TypeScript" /></a>
+    <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT" /></a>
+  </p>
+  <p>A modern, privacy-first web application for batch image compression running natively in your browser. Files never leave your device.</p>
+  <h3><a href="https://image-compressor-leoworks.netlify.app">Live Demo</a></h3>
+</div>
 
-Современное web-приложение для пакетного сжатия изображений прямо в браузере. Файлы никогда не покидают ваше устройство — вся обработка происходит локально.
+<br />
 
-**[Открыть приложение →](https://image-compressor-leoworks.netlify.app)**
+## ✨ Key Features
 
-## 🚀 Быстрый Старт
+- **Professional Compression**: Uses native browser codecs for maximum speed (JPEG, WebP) and WebAssembly for AVIF generation.
+- **Privacy-First**: No backend server. All image processing happens 100% locally on your device.
+- **Batch Processing**: Handle multiple images concurrently using Web Workers (`WorkerPool` utilizes up to 4 CPU threads).
+- **HEIC/HEIF Support**: Automatically converts iPhone photos to standard formats on the fly before compression.
+- **Smart Export Strategy**: 
+  - Downloads single files directly (`.webp`, `.jpeg`, `.avif`).
+  - Automatically packages multiple files into a single `.zip` archive.
+  - Built-in collision protection prevents overwriting files with the same name.
+- **Adaptive UI**: Premium design with automatic Light/Dark/System theme switching to match your OS preferences. Implemented with FOUC prevention for seamless loading.
+- **PWA & Offline Ready**: Installable as a standalone app via Chrome/Edge. Fully functional offline after initial load.
 
-Вам понадобится **Node.js** (версия 18+).
+## 🚀 Quick Start
 
-```bash
-npm install
-npm run dev
-```
+### Prerequisites
+Make sure you have [Node.js](https://nodejs.org/) (version 18+) installed.
 
-Откройте `http://localhost:5173` в браузере.
+### Installation
 
----
+1. Clone the repository and navigate into the project directory:
+   ```bash
+   git clone https://github.com/rQC2Qm7p7U/image-compressor.git
+   cd image-compressor
+   ```
 
-## ✨ Возможности
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-### Профессиональное сжатие
-Приложение использует **нативные браузерные кодеки** для JPEG и WebP (максимальная скорость), а также **AVIF** через WebAssembly:
-- **3 формата на выбор**: JPEG, WebP, AVIF.
-- **Настраиваемое качество**: ползунок 1–100%.
-- **Ресайз**: опциональное уменьшение по ширине с сохранением пропорций.
-- **Поддержка HEIC/HEIF**: автоматическая конвертация фото с iPhone на лету.
-- **Полная конфиденциальность**: файлы не отправляются на сервер.
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-### Пакетная обработка
-- **Drag & Drop** или выбор через файловый менеджер.
-- **Многопоточность**: `WorkerPool` использует все доступные ядра CPU (до 4 потоков).
-- **Автоматическая обработка**: сжатие начинается сразу после добавления файлов.
-- **Автоматическое скачивание**: результат загружается автоматически по завершении.
+4. Open your browser and navigate to `http://localhost:5173`.
 
-### Умный экспорт
-- **1 файл** → скачивание напрямую (`.webp` / `.jpeg` / `.avif`).
-- **Несколько файлов** → автоматическая упаковка в `.zip` архив.
-- **Защита от коллизий**: файлы с одинаковыми именами (например, `photo.png` и `photo.jpg` → `photo.webp` и `photo_1.webp`) не перезаписывают друг друга.
+## 📱 PWA Installation
 
-### PWA и оффлайн
-- Устанавливается как обычное приложение через Chrome/Edge.
-- Работает без интернета после первой загрузки.
-- Кнопка «Update Available» при выходе новой версии.
+1. Open the application in **Google Chrome** or **Microsoft Edge**.
+2. Click the **Install** icon on the right side of the URL address bar.
+3. The app will be added to your system's application menu and can be launched offline as a native desktop window.
 
----
+## 🛠 Tech Stack
 
-## 📱 Установка как приложение
+| Category | Technologies |
+| :--- | :--- |
+| **Framework** | React 19, TypeScript, Vite 7 |
+| **State Management** | Zustand (with `persist` middleware) |
+| **Compression** | Native Browser Codecs (WebP, JPEG) + WASM (`@jsquash/avif`) |
+| **HEIC Decoding**| `heic2any` (Client-side translation) |
+| **Archiving** | `fflate` (Synchronous ZIP packing without server overhead) |
+| **PWA** | `vite-plugin-pwa` (Workbox, prompt-mode updates) |
+| **Styling** | CSS Variables, HSL Palette, BEM Methodology |
 
-1. Откройте приложение в **Google Chrome** или **Edge**.
-2. В адресной строке справа нажмите иконку **«Установить»**.
-3. Приложение появится в меню «Пуск» / «Launchpad» и будет работать оффлайн.
+## 📁 Project Structure
 
----
-
-## 🛠 Технический стек
-
-| Категория | Технологии |
-|---|---|
-| **Фреймворк** | React 19, TypeScript, Vite 7 |
-| **Состояние** | Zustand (с `persist` middleware для настроек) |
-| **Сжатие** | Нативные браузерные кодеки (WebP, JPEG) + WASM (`@jsquash/avif`) через Web Workers |
-| **HEIC** | `heic2any` (конвертация на клиенте) |
-| **Архивация** | `fflate` (синхронный ZIP без серверной зависимости) |
-| **PWA** | `vite-plugin-pwa` (Workbox, prompt-mode обновления) |
-| **Стиль** | CSS Variables, HSL-палитра, BEM-классы |
-
----
-
-## 📁 Структура проекта
-
-```
+```text
 src/
-├── components/       # UI-компоненты (TabButton, AppFooter, Toast)
-├── views/            # Экраны (ImportView, SettingsView)
-├── store/            # Zustand store (useAppStore)
-├── lib/              # Бизнес-логика (imageProcessor, exportUtils)
-├── workers/          # Web Worker для WASM-сжатия
-├── index.css         # Дизайн-система (CSS Variables + BEM)
-├── App.tsx           # Корневой layout
-└── main.tsx          # Точка входа
+├── components/       # Reusable UI components (ThemeToggle, AppFooter, Toast)
+├── views/            # Main application views (ImportView, SettingsView)
+├── store/            # Global state management via Zustand (useAppStore)
+├── lib/              # Core business logic (imageProcessor, exportUtils)
+├── workers/          # Web Workers for asynchronous WASM compression
+├── index.css         # Global design system (CSS variables + BEM styling)
+├── App.tsx           # Root layout and context providers
+└── main.tsx          # Application entry point
 ```
 
----
+## 🤝 Contributing
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/rQC2Qm7p7U/image-compressor/issues).
 
-## 📄 Лицензия
+## 📄 License
 
-MIT — [LeoWorks](https://www.linkedin.com/in/leoshw/)
+This project is [MIT](https://opensource.org/licenses/MIT) licensed.<br />
+Developed by [LeoWorks](https://www.linkedin.com/in/leoshw/).
