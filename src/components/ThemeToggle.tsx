@@ -32,7 +32,7 @@ export const ThemeToggle: React.FC = () => {
 
     return (
         <button 
-            className="theme-toggle-btn"
+            className="icon-control-btn animate-fade-up delay-100"
             onClick={cycleTheme}
             title={getTitle()}
             aria-label="Переключить тему"

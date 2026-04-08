@@ -18,11 +18,13 @@ export interface Settings {
     quality: number; // 0-100
     resize: boolean;
     maxWidth: number;
+    soundEnabled: boolean;
 }
 
 const DEFAULT_FORMAT: Settings['format'] = 'webp';
 const DEFAULT_QUALITY = 80;
 const DEFAULT_MAX_WIDTH = 1920;
+const DEFAULT_SOUND_ENABLED = true;
 
 interface AppState {
     files: Job[];
@@ -43,6 +45,7 @@ export const useAppStore = create<AppState>()(
                 quality: DEFAULT_QUALITY,
                 resize: false,
                 maxWidth: DEFAULT_MAX_WIDTH,
+                soundEnabled: DEFAULT_SOUND_ENABLED,
             },
 
             addFiles: (newFiles) => set((state) => {

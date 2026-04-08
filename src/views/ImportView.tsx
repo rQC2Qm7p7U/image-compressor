@@ -4,6 +4,7 @@ import { Upload, RefreshCw, CheckCircle2, AlertCircle, FileImage } from 'lucide-
 import { compressImage } from '../lib/imageProcessor';
 import { createZipFromJobs, downloadBlob, buildOutputFilename } from '../lib/exportUtils';
 import { useToast } from '../components/ToastContext';
+import { playUISound } from '../lib/audio';
 
 const ZIP_FILENAME = 'images.zip';
 /** Delay before clearing the file list after auto-download (ms) */
@@ -54,6 +55,7 @@ export const ImportView: React.FC = () => {
             f.name.toLowerCase().endsWith('.avif')
         );
         if (validFiles.length > 0) {
+            playUISound('drop');
             autoDownloadTriggered.current = false;
             addFiles(validFiles);
         }
@@ -139,9 +141,11 @@ export const ImportView: React.FC = () => {
                     msg += `Increased by ${(increased / 1024 / 1024).toFixed(1)} MB (quality too high).`;
                 }
             }
+            playUISound('success');
             showToast(msg, 'success');
 
         } catch (e) {
+            playUISound('error');
             showToast('Failed to create ZIP or download file', 'error');
             console.error(e);
         }
@@ -171,7 +175,7 @@ export const ImportView: React.FC = () => {
     const dropZoneClass = `drop-zone${isDragging ? ' dragging' : ''}${isProcessing ? ' processing' : ''}`;
 
     return (
-        <div className="import-view">
+        <div className="import-view animate-fade-up">
             {/* Drop Zone */}
             <div
                 onClick={() => !isProcessing && fileInputRef.current?.click()}

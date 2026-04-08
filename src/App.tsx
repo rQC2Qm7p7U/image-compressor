@@ -7,6 +7,7 @@ import { AppFooter } from './components/AppFooter';
 import { ToastProvider } from './components/Toast';
 import { ThemeProvider } from './components/ThemeContext';
 import { ThemeToggle } from './components/ThemeToggle';
+import { SoundToggle } from './components/SoundToggle';
 
 function App() {
   const [activeTab, setActiveTab] = useState<'import' | 'settings'>('import');
@@ -15,13 +16,16 @@ function App() {
     <ThemeProvider>
       <ToastProvider>
         <div className="container app-layout">
-          <ThemeToggle />
-          <header className="app-header">
-            <h1 className="app-title">ImgCompressor</h1>
-          <p className="app-subtitle">Premium Privacy-First Batch Compression</p>
+          <div className="top-controls">
+            <SoundToggle />
+            <ThemeToggle />
+          </div>
+          <header className="app-header animate-fade-up">
+            <h1 className="app-title animate-fade-up delay-100">ImgCompressor</h1>
+          <p className="app-subtitle animate-fade-up delay-200">Premium Privacy-First Batch Compression</p>
         </header>
 
-        <main className="card app-main">
+        <main className="card app-main animate-fade-up delay-300">
           <nav className="app-nav">
             <TabButton
               active={activeTab === 'import'}

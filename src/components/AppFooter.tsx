@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 const LINKS = {
@@ -22,6 +22,36 @@ export const AppFooter: React.FC = () => {
         },
     });
 
+    const [installPrompt, setInstallPrompt] = useState<any>(null);
+
+    useEffect(() => {
+        const handleBeforeInstallPrompt = (e: Event) => {
+            e.preventDefault();
+            setInstallPrompt(e);
+        };
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        
+        // Listen to successful install
+        const handleAppInstalled = () => {
+            setInstallPrompt(null);
+        };
+        window.addEventListener('appinstalled', handleAppInstalled);
+        
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            window.removeEventListener('appinstalled', handleAppInstalled);
+        };
+    }, []);
+
+    const handleInstallClick = async () => {
+        if (!installPrompt) return;
+        installPrompt.prompt();
+        const { outcome } = await installPrompt.userChoice;
+        if (outcome === 'accepted') {
+            setInstallPrompt(null);
+        }
+    };
+
     return (
         <footer className="app-footer">
             <div>
@@ -34,6 +64,11 @@ export const AppFooter: React.FC = () => {
             </div>
             <div className="app-footer__version">
                 <span>v{version}</span>
+                {installPrompt && (
+                    <button onClick={handleInstallClick} className="install-btn">
+                        Установить приложение
+                    </button>
+                )}
                 {needRefresh && (
                     <button
                         onClick={() => updateServiceWorker(true)}

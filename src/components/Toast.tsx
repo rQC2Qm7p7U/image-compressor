@@ -23,9 +23,12 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             <div className="toast-container" role="status" aria-live="polite">
                 {toasts.map(t => (
                     <div key={t.id} className={`toast ${t.type}`}>
-                        {t.type === 'success' && '✓ '}
-                        {t.type === 'error' && '✕ '}
-                        {t.message}
+                        <div className="toast-content">
+                            {t.type === 'success' && <span style={{ color: 'hsl(var(--color-success))', marginRight: '0.4rem' }}>✓</span>}
+                            {t.type === 'error' && <span style={{ color: 'hsl(var(--color-error))', marginRight: '0.4rem' }}>✕</span>}
+                            {t.message}
+                        </div>
+                        <div className="toast-progress" style={{ animationDuration: `${TOAST_DURATION_MS}ms` }} />
                     </div>
                 ))}
             </div>

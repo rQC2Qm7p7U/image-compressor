@@ -1,4 +1,5 @@
 import React, { type ReactNode } from 'react';
+import { playUISound } from '../lib/audio';
 
 interface TabButtonProps {
     active: boolean;
@@ -11,7 +12,10 @@ interface TabButtonProps {
 export const TabButton: React.FC<TabButtonProps> = ({ active, onClick, icon, label, count }) => {
     return (
         <button
-            onClick={onClick}
+            onClick={() => {
+                playUISound('click');
+                onClick();
+            }}
             className={`tab-btn${active ? ' active' : ''}`}
         >
             {icon}
