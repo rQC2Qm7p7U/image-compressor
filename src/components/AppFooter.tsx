@@ -2,8 +2,8 @@ import React from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 const LINKS = {
-    portfolio: 'https://kwork.ru/user/leoworks',
-    github: 'https://github.com/rQC2Qm7p7U/image-compressor',
+    portfolio: 'https://www.linkedin.com/in/leoshw',
+    github: 'https://github.com/rQC2Qm7p7U',
     netlify: 'https://image-compressor-leoworks.netlify.app',
 } as const;
 

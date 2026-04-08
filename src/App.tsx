@@ -5,15 +5,19 @@ import { CloudUpload, Settings } from 'lucide-react';
 import { TabButton } from './components/TabButton';
 import { AppFooter } from './components/AppFooter';
 import { ToastProvider } from './components/Toast';
+import { ThemeProvider } from './components/ThemeContext';
+import { ThemeToggle } from './components/ThemeToggle';
 
 function App() {
   const [activeTab, setActiveTab] = useState<'import' | 'settings'>('import');
 
   return (
-    <ToastProvider>
-      <div className="container app-layout">
-        <header className="app-header">
-          <h1 className="app-title">ImgCompressor</h1>
+    <ThemeProvider>
+      <ToastProvider>
+        <div className="container app-layout">
+          <ThemeToggle />
+          <header className="app-header">
+            <h1 className="app-title">ImgCompressor</h1>
           <p className="app-subtitle">Premium Privacy-First Batch Compression</p>
         </header>
 
@@ -41,7 +45,8 @@ function App() {
 
         <AppFooter />
       </div>
-    </ToastProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }
 
