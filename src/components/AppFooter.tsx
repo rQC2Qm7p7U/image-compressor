@@ -75,7 +75,7 @@ export const AppFooter: React.FC = () => {
                 <span>v{version}</span>
                 {installPrompt && (
                     <button onClick={handleInstallClick} className="install-btn">
-                        Установить приложение
+                        Install App
                     </button>
                 )}
                 {needRefresh && (

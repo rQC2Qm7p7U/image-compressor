@@ -23,8 +23,8 @@ export const SoundToggle: React.FC = () => {
         <button 
             className="icon-control-btn"
             onClick={toggleSound}
-            title={soundEnabled ? 'Звук включен (Нажмите, чтобы отключить)' : 'Звук выключен (Нажмите, чтобы включить)'}
-            aria-label="Переключить звук"
+            title={soundEnabled ? 'Sound enabled (Click to mute)' : 'Sound muted (Click to enable)'}
+            aria-label="Toggle sound"
         >
             <div className={`theme-toggle-inner`}>
                 {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}

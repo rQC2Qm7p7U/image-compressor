@@ -24,9 +24,9 @@ export const ThemeToggle: React.FC = () => {
 
     const getTitle = () => {
         switch (theme) {
-            case 'light': return 'Светлая тема (Нажмите, чтобы переключить на Темную)';
-            case 'dark': return 'Темная тема (Нажмите, чтобы переключить на Системную)';
-            case 'system': return 'Системная тема (Нажмите, чтобы переключить на Светлую)';
+            case 'light': return 'Light Theme (Click to switch to Dark)';
+            case 'dark': return 'Dark Theme (Click to switch to System)';
+            case 'system': return 'System Theme (Click to switch to Light)';
         }
     };
 
@@ -35,7 +35,7 @@ export const ThemeToggle: React.FC = () => {
             className="icon-control-btn animate-fade-up delay-100"
             onClick={cycleTheme}
             title={getTitle()}
-            aria-label="Переключить тему"
+            aria-label="Toggle theme"
         >
             <div className={`theme-toggle-inner ${theme}`}>
                 {getIcon()}

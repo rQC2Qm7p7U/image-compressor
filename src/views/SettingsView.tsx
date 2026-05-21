@@ -18,6 +18,32 @@ const FORMATS = [
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
     const { settings, updateSettings, files } = useAppStore();
+    const [localWidth, setLocalWidth] = React.useState<string>(settings.maxWidth.toString());
+
+    React.useEffect(() => {
+        setLocalWidth(settings.maxWidth.toString());
+    }, [settings.maxWidth]);
+
+    const handleWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const valStr = e.target.value;
+        setLocalWidth(valStr);
+
+        const val = parseInt(valStr, 10);
+        if (!isNaN(val) && val >= 1) {
+            updateSettings({ maxWidth: Math.min(val, MAX_WIDTH_LIMIT) });
+        }
+    };
+
+    const handleWidthBlur = () => {
+        let val = parseInt(localWidth, 10);
+        if (isNaN(val) || val < 1) {
+            val = 1920; // fallback to default
+        } else if (val > MAX_WIDTH_LIMIT) {
+            val = MAX_WIDTH_LIMIT;
+        }
+        setLocalWidth(val.toString());
+        updateSettings({ maxWidth: val });
+    };
 
     return (
         <div className="settings-view animate-fade-up">
@@ -98,13 +124,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNext }) => {
                         <Tooltip content="Maximum width in pixels">
                             <input
                                 type="number"
-                                value={settings.maxWidth}
+                                value={localWidth}
                                 min="1"
                                 max={MAX_WIDTH_LIMIT}
-                                onChange={(e) => {
-                                    const val = parseInt(e.target.value, 10);
-                                    updateSettings({ maxWidth: isNaN(val) || val < 1 ? 1 : val });
-                                }}
+                                onChange={handleWidthChange}
+                                onBlur={handleWidthBlur}
                                 className="resize-input"
                             />
                         </Tooltip>

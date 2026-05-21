@@ -6,7 +6,7 @@ const MAX_CONCURRENCY_CAP = 4;
 const FALLBACK_CONCURRENCY = 2;
 
 const MAX_CONCURRENCY = navigator.hardwareConcurrency
-    ? Math.min(MAX_CONCURRENCY_CAP, navigator.hardwareConcurrency - 1)
+    ? Math.max(1, Math.min(MAX_CONCURRENCY_CAP, navigator.hardwareConcurrency - 1))
     : FALLBACK_CONCURRENCY;
 
 class WorkerPool {
