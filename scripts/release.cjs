@@ -168,7 +168,7 @@ async function main() {
       const envPath = path.join(__dirname, '../.env');
       if (fs.existsSync(envPath)) {
         const envContent = fs.readFileSync(envPath, 'utf8');
-        const match = envContent.match(/(?:RELEASE_TOKEN|GITHUB_TOKEN)\s*=\s*(.+)/);
+        const match = envContent.match(/^\s*(?!#)(?:RELEASE_TOKEN|GITHUB_TOKEN)\s*=\s*(.+)/m);
         if (match) {
           githubToken = match[1].trim().replace(/['"]/g, '');
         }
