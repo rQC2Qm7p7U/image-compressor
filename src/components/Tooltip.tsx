@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 
 interface TooltipProps {
     content?: string;
-    children: ReactElement<any>;
+    children: ReactElement<React.HTMLAttributes<HTMLElement>>;
 }
 
 export const Tooltip: React.FC<TooltipProps> = ({ content, children }) => {

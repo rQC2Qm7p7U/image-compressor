@@ -1,5 +1,5 @@
 
-import { zipSync } from 'fflate';
+import { zip } from 'fflate';
 import type { Zippable } from 'fflate';
 import type { Job } from '../store/useAppStore';
 
@@ -41,8 +41,15 @@ export const createZipFromJobs = async (files: Job[]): Promise<Blob> => {
         }
     }
 
-    const zipped = zipSync(data);
-    return new Blob([zipped] as BlobPart[], { type: 'application/zip' });
+    return new Promise<Blob>((resolve, reject) => {
+        zip(data, (err, zipped) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(new Blob([zipped] as BlobPart[], { type: 'application/zip' }));
+            }
+        });
+    });
 };
 
 

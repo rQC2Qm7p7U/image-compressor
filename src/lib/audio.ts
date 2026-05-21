@@ -13,7 +13,7 @@ function getContext(): AudioContext | null {
     if (!supported) return null;
     if (!audioCtx) {
         try {
-            audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            audioCtx = new (window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
         } catch (e) {
             console.warn('Web Audio API not supported', e);
             supported = false;

@@ -7,6 +7,15 @@ const LINKS = {
     netlify: 'https://image-compressor-leoworks.netlify.app',
 } as const;
 
+interface BeforeInstallPromptEvent extends Event {
+    readonly platforms: string[];
+    readonly userChoice: Promise<{
+        outcome: 'accepted' | 'dismissed';
+        platform: string;
+    }>;
+    prompt(): Promise<void>;
+}
+
 export const AppFooter: React.FC = () => {
     const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
 
@@ -22,12 +31,12 @@ export const AppFooter: React.FC = () => {
         },
     });
 
-    const [installPrompt, setInstallPrompt] = useState<any>(null);
+    const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
     useEffect(() => {
         const handleBeforeInstallPrompt = (e: Event) => {
             e.preventDefault();
-            setInstallPrompt(e);
+            setInstallPrompt(e as BeforeInstallPromptEvent);
         };
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
         

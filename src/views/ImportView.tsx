@@ -17,7 +17,7 @@ function formatBytes(bytes: number): string {
 }
 
 export const ImportView: React.FC = () => {
-    const { files, addFiles, updateJob, settings, clearAll } = useAppStore();
+    const { files, addFiles, updateJob, settings } = useAppStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = useState(false);
     const { showToast } = useToast();
@@ -130,7 +130,12 @@ export const ImportView: React.FC = () => {
             }
 
             // Cleanup after short delay
-            setTimeout(() => clearAll(), CLEAR_DELAY_MS);
+            setTimeout(() => {
+                const idsToRemove = new Set(doneFiles.map(f => f.id));
+                useAppStore.setState(state => ({
+                    files: state.files.filter(f => !idsToRemove.has(f.id))
+                }));
+            }, CLEAR_DELAY_MS);
 
             let msg = `${doneFiles.length} file${doneFiles.length > 1 ? 's' : ''} compressed! `;
             if (totalSize > 0) {
@@ -149,7 +154,7 @@ export const ImportView: React.FC = () => {
             showToast('Failed to create ZIP or download file', 'error');
             console.error(e);
         }
-    }, [files, showToast, clearAll, savedSavings, totalSize]);
+    }, [files, showToast, savedSavings, totalSize]);
 
     // Auto-download when done
     useEffect(() => {

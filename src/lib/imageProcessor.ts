@@ -84,10 +84,13 @@ export const compressImage = async (job: Job, settings: Settings): Promise<Blob>
 
     return imageEngine.run(async (worker) => {
         if (isHeic) {
+            let timeoutId: ReturnType<typeof setTimeout> | undefined;
             try {
                 // Wrapper timeout to prevent WASM/libheif silent crash deadlocks
                 const timeoutError = new Error('HEIC conversion timed out (file may be too large or corrupted)');
-                const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(timeoutError), 30000));
+                const timeoutPromise = new Promise<never>((_, reject) => {
+                    timeoutId = setTimeout(() => reject(timeoutError), 30000);
+                });
                 
                 const converted = await Promise.race([
                     heic2any({ blob: job.file, toType: 'image/jpeg' }),
@@ -97,15 +100,26 @@ export const compressImage = async (job: Job, settings: Settings): Promise<Blob>
             } catch (err) {
                 console.error('Failed to convert HEIC to JPEG', err);
                 throw new Error(err instanceof Error ? err.message : 'Failed to parse HEIC file');
+            } finally {
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                }
             }
         }
 
         return new Promise<Blob>((resolve, reject) => {
-            const handler = (e: MessageEvent) => {
+            const errorHandler = (err: ErrorEvent) => {
+                worker.removeEventListener('message', messageHandler);
+                worker.removeEventListener('error', errorHandler);
+                reject(new Error(err.message || 'Worker runtime error'));
+            };
+
+            const messageHandler = (e: MessageEvent) => {
                 const { id, status, blob, error } = e.data;
                 if (id !== job.id) return;
 
-                worker.removeEventListener('message', handler);
+                worker.removeEventListener('message', messageHandler);
+                worker.removeEventListener('error', errorHandler);
                 if (status === 'done') {
                     const fallbackType =
                         settings.format === 'jpeg' ? 'image/jpeg' :
@@ -117,7 +131,8 @@ export const compressImage = async (job: Job, settings: Settings): Promise<Blob>
                 }
             };
 
-            worker.addEventListener('message', handler);
+            worker.addEventListener('message', messageHandler);
+            worker.addEventListener('error', errorHandler);
             worker.postMessage({ id: job.id, file: fileToProcess, settings });
         });
     }) as Promise<Blob>;
