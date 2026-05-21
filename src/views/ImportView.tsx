@@ -16,6 +16,32 @@ function formatBytes(bytes: number): string {
     return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+async function limitConcurrency<T, R>(
+    items: T[],
+    limit: number,
+    fn: (item: T) => Promise<R>
+): Promise<PromiseSettledResult<R>[]> {
+    const results: PromiseSettledResult<R>[] = new Array(items.length);
+    let index = 0;
+
+    const worker = async () => {
+        while (index < items.length) {
+            const currentIndex = index++;
+            const item = items[currentIndex];
+            try {
+                const value = await fn(item);
+                results[currentIndex] = { status: 'fulfilled', value };
+            } catch (reason) {
+                results[currentIndex] = { status: 'rejected', reason };
+            }
+        }
+    };
+
+    const workers = Array.from({ length: Math.min(limit, items.length) }, worker);
+    await Promise.all(workers);
+    return results;
+}
+
 export const ImportView: React.FC = () => {
     const { files, addFiles, updateJob, settings } = useAppStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -79,16 +105,14 @@ export const ImportView: React.FC = () => {
             )
         }));
 
-        Promise.allSettled(
-            pendingJobs.map(async (job) => {
-                const blob = await compressImage(job, settingsRef.current);
-                updateJob(job.id, {
-                    status: 'done',
-                    outputBlob: blob,
-                    compressedSize: blob.size
-                });
-            })
-        ).then(results => {
+        limitConcurrency(pendingJobs, 2, async (job) => {
+            const blob = await compressImage(job, settingsRef.current);
+            updateJob(job.id, {
+                status: 'done',
+                outputBlob: blob,
+                compressedSize: blob.size
+            });
+        }).then(results => {
             // Batch all error updates into a single setState
             const errorUpdates: Array<{ id: string; error: string }> = [];
             results.forEach((result, i) => {

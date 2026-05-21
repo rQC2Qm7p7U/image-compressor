@@ -1,5 +1,4 @@
 import type { Job, Settings } from '../store/useAppStore';
-import heic2any from 'heic2any';
 
 /** Prevent spawning too many workers even on high-core machines */
 const MAX_CONCURRENCY_CAP = 4;
@@ -91,6 +90,10 @@ export const compressImage = async (job: Job, settings: Settings): Promise<Blob>
                 const timeoutPromise = new Promise<never>((_, reject) => {
                     timeoutId = setTimeout(() => reject(timeoutError), 30000);
                 });
+                
+                // Dynamically load heic2any on-demand
+                const heic2anyModule = await import('heic2any');
+                const heic2any = heic2anyModule.default;
                 
                 const converted = await Promise.race([
                     heic2any({ blob: job.file, toType: 'image/jpeg' }),

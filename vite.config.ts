@@ -45,6 +45,25 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['@jsquash/jpeg', '@jsquash/webp', '@jsquash/avif']
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
+              return 'vendor-react';
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
+            }
+            if (id.includes('fflate')) {
+              return 'vendor-zip';
+            }
+          }
+        }
+      }
+    }
+  },
   server: {
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
